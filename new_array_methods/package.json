@@ -1,0 +1,18 @@
+{
+  "name": "new_array_methods",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Wes Bos",
+  "license": "ISC",
+  "dependencies": {
+    "array.prototype.toreversed": "^1.1.1",
+    "array.prototype.tosorted": "^1.1.1",
+    "array.prototype.tospliced": "^1.1.1",
+    "array.prototype.with": "^1.1.1"
+  }
+}

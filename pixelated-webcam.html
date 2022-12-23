@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>🔥 Make a photo booth app in about 15 lines of JavaScript</title>
+  <link rel="icon" href="https://fav.farm/🎥" />
+</head>
+
+<body>
+  <canvas></canvas>
+  <button><video playsinline muted autoplay></video></button>
+  <script type="module">
+    const vid = document.querySelector('video');
+    const canvas = document.querySelector('canvas');
+    const ctx = canvas.getContext('2d');
+
+    vid.srcObject = await navigator.mediaDevices.getUserMedia({ video: true });
+    function takeaPic() {
+      [canvas.width, canvas.height] = [vid.videoWidth, vid.videoHeight];
+      ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+      const image = document.createElement('img');
+      image.src = canvas.toDataURL('image/jpg');
+      image.style = `--rotate: ${Math.random() * 360}deg; --x:${Math.random() * 100}%; --y:${Math.random() * 100}%;`;
+      document.body.appendChild(image);
+    }
+    vid.parentElement.addEventListener('click', takeaPic);
+    setInterval(takeaPic, 50);
+  </script>
+
+  <style>
+    canvas {
+      display: none;
+    }
+
+    html {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    video {
+      position: relative;
+      z-index: 2;
+    }
+
+    img {
+      position: absolute;
+      top: var(--y);
+      left: var(--x);
+      rotate: var(--rotate);
+      transform: translate(-100%, -100%);
+      width: 200px;
+      border: 10px solid white;
+      border-bottom-width: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    img[src="data:,"] {
+      display: none;
+    }
+
+  </style>
+</body>
+
+</html>

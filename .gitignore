@@ -1,0 +1,4 @@
+tweets/
+node_modules/
+*.log
+.Ds_store

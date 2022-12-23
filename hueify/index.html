@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Hueify</title>
+</head>
+
+<body>
+  <style>
+    html {
+      --synthwave: linear-gradient(172deg, #EB6B0F 0%, #FF1111 4%, #BE2912 15%, #3FA7E3 17%, #21FFFF 29%, #1BA6E1 30%, #18399E 31%, #E13FB9 39%, #D5140D 40%, #E743A5 43%, #F062B7 44%, #F062B7 73%, #D4190C 74%, #FFD711 81%, #FC00D6 82%, #AE0E86 96%, #810568 100%);
+    }
+
+
+    /* Hueify css animation */
+    @keyframes hueify {
+      0% {
+        filter: hue-rotate(0deg);
+      }
+
+      100% {
+        filter: hue-rotate(360deg);
+      }
+    }
+
+    /* gradient animation */
+    @keyframes gradient {
+      0% {
+        background-position-x: 0;
+      }
+
+      100% {
+        background-position-x: 5400px;
+      }
+    }
+
+    .hueify {
+      animation: hueify 5s infinite linear;
+      position: relative;
+    }
+
+    .hueify:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--synthwave);
+      z-index: -1;
+      mix-blend-mode: overlay;
+    }
+
+    .hue-wrap {
+      position: relative;
+      display: inline-block;
+    }
+
+    .hue-wrap:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #FC466B 0%, #3F5EFB 50%, #FC466B 100%);
+      ;
+      z-index: 1;
+      background-repeat: repeat;
+      background-size: 100% 100%;
+      background-position: right 60%;
+      animation: gradient 5s infinite linear;
+      /* animation-direction: alternate-reverse; */
+      mix-blend-mode: overlay;
+    }
+
+  </style>
+
+  <div class="hue-wrap">
+    <img width="500" src=" https://wes.io/7KujmojN/content" class="hueify">
+  </div>
+
+</body>
+
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+
+  <input type="file" onchange="previewFile()" /><br />
+  <video src=""></video>
+  <img src="" height="200" alt="Image preview" />
+
+  <script>
+    function previewFile() {
+      const preview = document.querySelector('img');
+      const video = document.querySelector('video');
+      const file = document.querySelector('input[type=file]').files[0];
+      const reader = new FileReader();
+
+      // reader.addEventListener('load', () => {
+      //   console.log(reader)
+
+      //   preview.src = reader.result; // jpg from selected HEIC
+      // }, false);
+
+
+      if (file) {
+        reader.readAsDataURL(file);
+        video.src = URL.createObjectURL(file);
+        video.play();
+      }
+    }
+
+
+  </script>
+
+</body>
+
+</html>

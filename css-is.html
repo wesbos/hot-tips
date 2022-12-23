@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<div class="post">
+  <h1>h1</h1>
+  <h2>h2</h2>
+  <h3>h3</h3>
+</div>
+
+<body>
+
+  <style>
+    .post h1,
+    .post h2,
+    .post h3,
+    .post h4,
+    .post h5,
+    .post h6 {
+      font: 'Comic Sans MS', fantasy;
+    }
+
+
+    /* SICK */
+    .post :where(h1, h2, h3, h4, h5, h6) {
+      font-family: 'Comic Sans MS', fantasy;
+      color: #ffc600;
+    }
+
+    .post :where(h1, h2, h3, h4, h5, h6) a {
+      font-size: 0.5rem;
+    }
+
+    .signup input,
+    .signput button,
+    .signup textarea,
+    .signup select,
+    .signup option {
+      border: 1px groove salmon;
+    }
+
+    .signup :where(input, button, textarea, select, option) {
+      border: 1px groove salmon;
+    }
+
+    .signup :is(input, button, textarea, select, option) {
+      /* More Specific! */
+      border: 1px groove salmon;
+    }
+
+  </style>
+</body>
+
+</html>

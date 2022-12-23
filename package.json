@@ -1,0 +1,21 @@
+{
+  "name": "hot-tips",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "npm run vite",
+    "vite": "vite",
+    "caddy": "caddy start"
+  },
+  "author": "Wes Bos",
+  "license": "ISC",
+  "dependencies": {
+    "vite": "^3.2.1",
+    "vite-plugin-list-directory-contents": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.17"
+  }
+}

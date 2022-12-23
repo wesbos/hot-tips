@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+
+  <header>
+    <div class="card-outer">
+      <img src="https://pbs.twimg.com/profile_images/879361767914262528/HdRauDM-_400x400.jpg" class="card-inner">
+    </div>
+  </header>
+
+
+  <style>
+    .card-outer {
+      --radius: 20px;
+      --border: 5px;
+      /* Outer = Inner + Space Between */
+      border-radius: calc(var(--radius) + var(--border));
+    }
+
+    .card-inner {
+      margin: var(--border);
+      border-radius: var(--radius);
+    }
+
+    body {
+      background: black;
+    }
+
+    header {
+      background: #e3120b;
+      text-align: center;
+    }
+
+    .card-outer {
+      display: inline-block;
+      translate: 0 50%;
+      overflow: hidden;
+      background: black;
+    }
+
+
+    img {
+      width: 200px;
+    }
+
+  </style>
+
+</body>
+
+</html>

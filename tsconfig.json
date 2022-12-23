@@ -1,0 +1,16 @@
+{
+  "include": [
+    "./**/*"
+  ],
+  "compilerOptions": {
+    "strict": true,
+    "module": "es2022",
+    "target": "es2022",
+    "lib": [
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "skipLibCheck": true
+  }
+}
