@@ -1,16 +1,17 @@
 import { defineConfig } from 'vite';
 import { directoryPlugin } from 'vite-plugin-list-directory-contents';
 import { exec } from 'node:child_process';
-import { promisify } from 'node:util';
 
 async function run(cmd: string, waitForText?: string) {
-  return new Promise<void>(function(resolve) {
+  return new Promise<void>((resolve) => {
     const process = exec(cmd);
-    process.stdout.on('data', function(data) {
-      if (waitForText && data.includes(waitForText)) {
-        resolve();
-      }
-    }).on('close', resolve);
+    process.stdout
+      ?.on('data', (data: string) => {
+        if (waitForText && data.includes(waitForText)) {
+          resolve();
+        }
+      })
+      .on('close', resolve);
   });
 }
 
@@ -23,11 +24,12 @@ export default defineConfig(async () => {
     server: {
       port: 7777,
       host: 'localhost',
-      open: 'https://tips.localhost'
+      open: 'https://tips.localhost',
     },
     plugins: [
-      directoryPlugin({ baseDir: __dirname })
+      directoryPlugin({
+        baseDir: __dirname,
+      }),
     ],
-  }
-
+  };
 });
