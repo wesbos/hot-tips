@@ -1,5 +1,7 @@
 import { defineConfig } from 'vite';
-import { directoryPlugin } from 'vite-plugin-list-directory-contents';
+// import { directoryPlugin } from 'vite-plugin-list-directory-contents';
+/* eslint-disable */
+import { directoryPlugin } from '../../../Sites/vite-plugin-list-directory-contents/plugin';
 import { exec } from 'node:child_process';
 
 async function run(cmd: string, waitForText?: string) {

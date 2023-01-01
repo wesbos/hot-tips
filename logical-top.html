@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logical Top</title>
+</head>
+<body>
+  <input type="checkbox" name="switch" id="switch">
+  <label for="switch">Switch Layouts</label>
+  <article>
+    <h2>Chapter One</h2>
+    <div class="text">
+    <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Vel magni totam odio.</p>
+    <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Nulla cum mollitia dolore quod laboriosam rem, laborum officia quidem porro accusantium culpa itaque ex fugit dicta ea corporis aperiam obcaecati hic in, consectetur temporibus iusto eligendi animi. Nostrum ad fuga sequi recusandae! Et omnis nihil corrupti atque magnam placeat aut dolor.</p>
+    <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Voluptates, laboriosam autem vero rerum error culpa? Officiis sed maiores nobis exercitationem neque ad aperiam voluptatum, esse vitae tempore tempora assumenda labore qui impedit. Laudantium magni provident, incidunt porro esse, voluptatum sunt accusamus, officia soluta perspiciatis nesciunt error iusto ex asperiores minima vitae quasi ut doloribus? Enim deleniti odit fugit praesentium aperiam eveniet mollitia nesciunt nisi dolore corporis omnis, id dolorum ullam est error at veniam soluta atque! Commodi ipsa quaerat a optio temporibus illo laborum qui quae, et tempora voluptatem saepe fugiat, libero veniam! Optio sint exercitationem sapiente in cupiditate voluptatibus?</p>
+    </div>
+  </article>
+  <article>
+    <h2>Chapter Two</h2>
+    <div class="text">
+      <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Impedit, rem.</p>
+      <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Molestias non deleniti illum doloremque voluptates! Dicta.</p>
+      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non iste voluptatibus asperiores!</p>
+    </div>
+  </article>
+
+  <style>
+    h2 {
+      margin: 0; /* zero out UA style */
+      /* Notice how we don't have to change any of these values when we switch layouts? This would not be the case with -top -left -bottom -right values */
+      bo`rder-block-start: 3px solid #ffc000;
+      padding-block: 20px;
+      padding-inline: 50px;
+      margin-block-end: 20px;
+    }
+
+    #switch:checked ~ article  {
+      grid-template-columns: auto 1fr;
+    }
+
+    #switch:checked ~ article h2  {
+      writing-mode: vertical-lr;
+    }
+
+
+    /* NOT important */
+        html {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif
+    }
+
+
+    p {
+      margin: 10px 0;
+      line-height: 1.5;
+    }
+
+    h2 {
+      background: black;
+      color: white;
+      font-size: 50px;
+      text-transform: uppercase;
+    }
+
+    article {
+      margin-bottom: 20px;
+      display: grid;
+    }
+
+
+
+  </style>
+</body>
+</html>
