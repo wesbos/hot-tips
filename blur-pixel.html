@@ -4,12 +4,38 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
+  <link rel="stylesheet" href="./base.css">
 </head>
 <body>
 
   <p>Your login code is <span class="blur">ABC123</span></p>
 
   <p>You really are a little piece of <span class="blur">shed</span>, aren't you?!</p>
+
+  <style>
+    html {
+      text-align: center;
+      background: red;
+    }
+    .blur {
+      display: inline-grid;
+      position: relative;
+    }
+    .blur:before {
+      content: '';
+      background-image: url("data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs="), url("data:image/gif;base64, iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=");
+      background-position: 0 0, 1px 1px;
+      background-repeat: no-repeat;
+      height: 4px;
+      width: 4px;
+      display: inline-block;
+      grid-column: -1;
+    }
+    .blur > * {
+      background: green;
+    }
+
+  </style>
 
 </body>
 </html>

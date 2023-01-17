@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Checkbox Hack</title>
+</head>
+<body>
+  <label for="toggle">
+    <input type="checkbox" id="toggle">
+    Toggle Item
+  </label>
+
+  <div role="radiogroup" aria-labelledby="color">
+    <h2>What is your favourite colour?</h2>
+    <label for="red">
+      <input type="radio" name="color" value="red" id="red">Red
+    </label>
+    <label for="blue">
+      <input type="radio" name="color" value="red" id="red">Red
+    </label>
+  </div>
+  <label for="size">
+    <input type="radio" name="size" value="10">
+  </label>
+
+  <div class="control-me">Control me</div>
+
+  <!--
+    Note: You should not use the checkbox hack for things that need to announce their change.
+    https://ux.stackexchange.com/questions/81122/what-are-the-accessibility-concerns-of-a-checkbox-based-navigation
+   -->
+
+
+</body>
+</html>

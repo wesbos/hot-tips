@@ -36,29 +36,16 @@
 //   console.log('no score');
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 true;
+
 !true;
 !!true;
 
 false;
 !false;
 !!false;
-!!!!false;
-!!!!!!!!!!!!!!!!!!!!!!!!false;
+!!false;
+!!false;
 
 !!0;
 !!'';
@@ -68,17 +55,17 @@ false;
 
 !!['wes'].length;
 !!['wes'];
-!!Object.keys({ name: 'wes'}).length
+!!Object.keys({ name: 'wes' }).length;
 
 const name = 'wes';
 
-if(!!name) {
-  console.log('you have no name!')
+if (name) {
+  console.log('you have no name!');
 }
 
 let score;
 !!score;
-let score2 = 0;
+const score2 = 0;
 !!score2;
 
-export {}
+export {};

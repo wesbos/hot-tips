@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./base.css">
+  <title>CSS Golden Ratio</title>
+</head>
+<body>
+  <div class="grid">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+    <div class="item">4</div>
+    <div class="item">5</div>
+    <div class="item">6</div>
+    <div class="item">7</div>
+    <div class="item">8</div>
+    <div class="item">9</div>
+  </div>
+
+  <style>
+    .grid {
+      display: grid;
+      --col1: 1fr;
+      --col2: 1fr;
+      --col3: 1fr;
+      grid-template-columns: var(--col1) var(--col2) var(--col3);
+      height: 100vh;
+      transition: all 0.2s;
+    }
+    .grid:has(.item:nth-child(3n+1):hover) {
+      --col1: 3fr;
+    }
+    .grid:has(.item:nth-child(3n+2):hover) {
+      --col2: 3fr;
+    }
+    .grid:has(.item:nth-child(3n+3):hover) {
+      --col3: 3fr;
+    }
+
+
+    .item {
+      background-color: #eee;
+      border: 1px solid #ccc;
+      padding: 1rem;
+      font-size: 2rem;
+      text-align: center;
+      display: grid;
+      place-content: center;
+    }
+  </style>
+
+
+</body>
+</html>

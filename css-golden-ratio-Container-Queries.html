@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSS Golden Ratio</title>
+</head>
+<body>
+  <div class="grid">
+    <div class="box a"><p>CONTAINER</p></div>
+    <div class="box b"><p>CONTAINER</p></div>
+    <div class="box c"><p>CONTAINER</p></div>
+    <div class="box d"><p>CONTAINER</p></div>
+    <div class="box e"><p>CONTAINER</p></div>
+    <div class="box f"><p>CONTAINER</p></div>
+    <div class="box g"><p>CONTAINER</p></div>
+  </div>
+
+  <div class="grid">
+    <div class="box a"><p>CONTAINER</p></div>
+    <div class="box b"><p>CONTAINER</p></div>
+    <div class="box c"><p>CONTAINER</p></div>
+    <div class="box d"><p>CONTAINER</p></div>
+    <div class="box e"><p>CONTAINER</p></div>
+    <div class="box f"><p>CONTAINER</p></div>
+    <div class="box g"><p>CONTAINER</p></div>
+  </div>
+
+  <div class="grid" style="writing-mode: vertical-lr; aspect-ratio: 1/ 1.61803398875;">
+    <div class="box a"><p>CONTAINER</p></div>
+    <div class="box b"><p>CONTAINER</p></div>
+    <div class="box c"><p>CONTAINER</p></div>
+    <div class="box d"><p>CONTAINER</p></div>
+    <div class="box e"><p>CONTAINER</p></div>
+    <div class="box f"><p>CONTAINER</p></div>
+    <div class="box g"><p>CONTAINER</p></div>
+  </div>
+
+  <style>
+
+    .grid {
+      width: 100%;
+      aspect-ratio: 1.61803398875 / 1;
+      display: grid;
+      /* Values from https://codepen.io/Rplus/pen/JWNEOO */
+      grid-template-columns: 61.8% 9.02% 5.58% 23.6%;
+      grid-template-rows: 61.8% 9.02% 5.58% 23.6%;
+      grid-template-areas: "A B B B" "A E F C" "A E G C" "A D D C";
+    }
+
+    /*
+      Container CSS
+    */
+    .box {
+      container: box / inline-size;
+    }
+    .box p {
+      font-size: 12cqmin;
+    }
+
+
+    /*
+      One font size for the every single box!
+    */
+
+
+    .box:nth-child(4n) { background-position: 0 0; }
+    .box:nth-child(4n + 2) { background-position: 100% 0; }
+    .box:nth-child(4n + 3) { background-position: 100% 100%; }
+    .box:nth-child(4n + 4) { background-position: 0 100%; }
+
+    .box.a {
+      grid-area: A;
+      background-color: #F72585;
+    }
+    .box.b {
+      grid-area: B;
+      background-color: #B5179E;
+    }
+    .box.c {
+      grid-area: C;
+      background-color: #7209B7;
+    }
+    .box.d {
+      grid-area: D;
+      background-color: #560BAD;
+    }
+    .box.e {
+      grid-area: E;
+      background-color: #3F37C9;
+    }
+    .box.f {
+      grid-area: F;
+      background-color: #4361EE;
+    }
+    .box.g {
+      grid-area: G;
+      background-color: #fb8500;
+    }
+
+    /* Not important, makes look nice! */
+    html {
+      color: whitesmoke;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      font-weight: 900;
+    }
+    body {
+      display: grid;
+      place-items: center;
+      grid-template-columns: 2fr 1fr 1fr;
+      min-height: 100vh;
+      gap: 50px;
+    }
+    @media (max-width: 1200px) {
+      body {
+        grid-template-columns: 1fr;
+      }
+      .grid:nth-child(2) {
+        width: 60%;
+      }
+    }
+    /* border box */
+    * {
+      box-sizing: border-box;
+    }
+
+    .box {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 5px solid rgba(74, 73, 73, 0.1);
+      background-size:200% 200%;
+      background-repeat: no-repeat;
+    }
+    .box p {
+      mix-blend-mode: luminosity;
+    }
+    h2 {
+      color: black;
+      text-align: center;
+    }
+  </style>
+
+
+</body>
+</html>

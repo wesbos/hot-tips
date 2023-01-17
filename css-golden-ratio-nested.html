@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSS Golden Ratio</title>
+</head>
+<body>
+  <!-- This is a mistake -->
+  <div class="container">
+    <div class="item a odd">a
+      <div class="item b even">b
+        <div class="item c odd">c
+          <div class="item d even">d
+            <div class="item e odd">e
+              <div class="item f even">f
+                <div class="item g odd">g
+                  <div class="item h odd">h</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+
+    .container {
+      width: 100%;
+      aspect-ratio: 1.61803398875 / 1;
+      border: 0.5px solid #4A4949;
+    }
+    .container > * {
+      height: 100%;
+      width: 100%;
+      color: #F2F2F2;
+      font-size: 1.5em;
+      font-weight: 700;
+      text-shadow: 1px 1px 1px #878787;
+      box-sizing: border-box;
+      border: 1px solid #4A4949;
+    }
+    .container .item.odd {
+      color: black;
+      border: 2px solid green;
+      display: grid;
+      grid-template-columns: 61.8% auto;
+      writing-mode: horizontal-tb;
+    }
+    .container .item.even {
+      color: black;
+      border: 2px solid red;
+      display: grid;
+      grid-template-rows: 61.8% auto;
+    }
+    .container .item.odd .item.odd {
+      writing-mode: horizontal-tb;
+      direction: rtl;
+    }
+    /* D */
+    .container .item.even .item.even {
+      /* writing-mode: vertical-lr; */
+    }
+    .item.a {
+      background-color: #a0ddff;
+    }
+    .item.b {
+      background-color: #c1cefe;
+    }
+    .item.c {
+      background-color: #758ecd;
+    }
+    .item.d {
+      background-color: #7189ff;
+    }
+    .item.e {
+      font-size: 1.2em;
+      background-color: #624cab;
+      grid-row: 1; /* Make the next even go to the top */
+    }
+    .item.f {
+      grid-column: 1; /* Make the next even go to the top */
+      font-size: 1em;
+      background-color: #5d2e8c;
+    }
+    .item.g {
+      font-size: 0.7em;
+      background-color: #7a7a7a;
+    }
+    .item.h {
+      font-size: 0.7em;
+      background-color: #4a4949;
+    }
+  </style>
+
+
+</body>
+</html>

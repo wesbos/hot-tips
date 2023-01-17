@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Container Queries</title>
+  <link rel="stylesheet" href="../base.css">
+</head>
+
+<body>
+
+  <article class="container">
+    <h2>Container Queries</h2>
+  </article>
+  <article class="container" >
+    <h2 class="fit" style="--letters:12;">Are awesome!</h2>
+  </article>
+  <article class="container">
+    <h2 class="fit" style="--letters:25;">Resize me you silly goose</h2>
+  </article>
+  <article class="container">
+    <h2>in Chrome, Safari, iOS, Edge</h2>
+  </article>
+  <article class="container">
+    <h2>in Firefox Feb 14th 💕</h2>
+  </article>
+
+  <style>
+    .container {
+      container: article / inline-size;
+    }
+
+    h2 {
+      font-size: 7cqw;
+    }
+
+    @container article (width < 150px) {
+      h2 {
+        color: #ffc600;
+      }
+    }
+
+    h2.fit {
+      font-family: 'Operator Mono', 'monospace';
+      /* 12 letters */
+      --minFontSize: 10px;
+      font-size: max(
+        var(--minFontSize),
+        calc(calc(100 / var(--letters)) *  1.5cqw)
+      );
+    }
+
+
+
+  </style>
+
+  <style>
+    body {
+      background: url('grad.png');
+      height: 100vh;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: 1fr;
+      align-content: center;
+      align-items: center;
+    }
+
+    .container {
+      background: white;
+      padding: 10px;
+      border-radius: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      resize: horizontal;
+      margin: 1em auto;
+      width: 50%;
+    }
+
+    h2 {
+      margin: 0;
+      text-align: center;
+    }
+
+  </style>
+</body>
+
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Container Queries</title>
+  <link rel="stylesheet" href="../base.css">
+</head>
+<body>
+
+<div class="container">
+  <p>Hello</p>
+  <p class="special">World</p>
+</div>
+<style>
+  .container {
+    container-name: style;
+    --flag: true;
+    background: black;
+  }
+  p {
+   color: green;
+  }
+@container style(--flag: true)  {
+  background: red;
+  p {
+    color: red;
+  }
+}
+
+</style>
+</body>
+</html>
