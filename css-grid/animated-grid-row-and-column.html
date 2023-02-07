@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./base.css">
+  <title>CSS Animated Grid</title>
+  <link rel="icon" href="https://fav.farm/🧮" />
+</head>
+
+<body>
+  <div class="grid">
+    <div class="item" tabindex="0">
+      <p>Vapormax Plus</p>
+      <p class="color">black</p>
+    </div>
+    <div class="item" tabindex="0">
+      <p>Vapormax</p>
+      <p class="color">ashphalt</p>
+    </div>
+    <div class="item" tabindex="0">
+      <p>Vapormax</p>
+      <p class="color">Grape</p>
+    </div>
+    <div class="item" tabindex="0">
+      <p>AirMax</p>
+      <p class="color">Leopard</p>
+    </div>
+    <div class="item" tabindex="0">
+      <p>AirMax</p>
+      <p class="color">Wheat</p>
+    </div>
+    <div class="item" tabindex="0">
+      <p>Flyknit</p>
+      <p class="color">zebra</p>
+    </div>
+    <div class="item" tabindex="0">
+      <p>Air Max 270</p>
+      <p class="color">React Camo</p>
+    </div>
+    <div class="item" tabindex="0">
+      <p>Airmax 90</p>
+      <p class="color">Galaxy</p>
+    </div>
+    <div class="item" tabindex="0">
+      <p>Airmax 270</p>
+      <p class="color">Black Gold</p>
+    </div>
+  </div>
+
+  <style>
+    html {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
+        "Helvetica Neue", sans-serif;
+      --purp: radial-gradient( circle farthest-corner at 10% 20%,  rgba(64,84,178,1) 0%, rgba(219,2,234,1) 90% );
+    }
+
+    .grid {
+      display: grid;
+      --col1: 1fr;
+      --col2: 1fr;
+      --col3: 1fr;
+      --row1: 1fr;
+      --row2: 1fr;
+      --row3: 1fr;
+      grid-template-columns: var(--col1) var(--col2) var(--col3);
+      grid-template-rows: var(--row1) var(--row2) var(--row3);
+      height: 100vh;
+      transition: all .2s;
+      background-image: var(--purp);
+    }
+
+    .grid:has(.item:nth-child(3n+1):hover) {
+      --col1: 2fr;
+    }
+
+    .grid:has(.item:nth-child(3n+2):hover) {
+      --col2: 2fr;
+    }
+
+    .grid:has(.item:nth-child(3n+3):hover) {
+      --col3: 2fr;
+    }
+    .grid:has(.item:nth-child(n+1):nth-child(-n+3):where(:hover, :focus)) {
+      --row1: 2fr;
+    }
+    .grid:has(.item:nth-child(n+4):nth-child(-n+6):where(:hover, :focus)) {
+      --row2: 2fr;
+    }
+
+    .grid:has(.item:nth-child(n+7):nth-child(-n+9):hover) {
+      --row3: 3fr;
+    }
+
+
+
+    .item {
+      background-color: #eee;
+      text-align: center;
+      display: grid;
+      align-content: center;
+      container: item / size;
+      transition: scale .2s;
+      background-position: center;
+      background-size: cover;
+      overflow: hidden;
+    }
+
+    .item p {
+      font-size: 15cqmin;
+      color: black;
+      font-weight: 900;
+      margin: 0;
+      padding: 5px;
+      position: relative;
+      -webkit-text-stroke-width: 1px;
+      -webkit-text-stroke-color: white;
+    }
+
+    .item p:before {
+      content: '';
+      display: block;
+      background: var(--purp);
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: -1;
+      mix-blend-mode: color;
+    }
+    .item p.color {
+      font-size: 5cqw;
+      text-transform: uppercase;
+      letter-spacing: 0.2cqmin;
+    }
+
+    .item:where(:hover, :focus) {
+      color: white;
+      scale: 1.1;
+      z-index: 2;
+      border-radius: 20px;
+      box-shadow:0 0 50px 20px rgba(0, 0, 0, 0.5);
+      align-content: space-between;
+    }
+    .grid:has(.item:hover) .item:not(:hover) {
+      mix-blend-mode: luminosity;
+    }
+
+
+    .item:nth-child(1) {
+      background-image: url(./shoes/vapormax-plus-black.jpg);
+      transform-origin: top left;
+    }
+    .item:nth-child(2) {
+      background-image: url(./shoes/vapirmax-ashphalt.jpg);
+      transform-origin: top center;
+    }
+    .item:nth-child(3) {
+      background-image: url(./shoes/vaporma-plus-grape.jpg);
+      transform-origin: top right;
+    }
+    .item:nth-child(4) {
+      background-image: url(./shoes/airmax-leopard.webp);
+      transform-origin: left center;
+    }
+    .item:nth-child(5) {
+      background-image: url(./shoes/airmax-wheat-gold.jpg);
+      transform-origin: center center;
+    }
+    .item:nth-child(6) {
+      background-image: url(./shoes/flyknit-zebra.jpg);
+      transform-origin: right center;
+    }
+    .item:nth-child(7) {
+      background-image: url(./shoes/Nike-Air-Max-270-React-Camo-Black-On-Foot-Side_w900.jpg);
+      transform-origin: bottom left;
+    }
+    .item:nth-child(8) {
+      background-image: url(./shoes/airamax 90 galaxy.webp);
+      transform-origin: bottom center;
+    }
+    .item:nth-child(9) {
+      background-image: url(./shoes/270-black-gold.png);
+      transform-origin: bottom right;
+    }
+
+
+    *, *:before, *:after {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+    }
+
+  </style>
+
+
+</body>
+
+</html>
