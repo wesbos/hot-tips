@@ -111,6 +111,16 @@
         column-gap: var(--gap);
         margin: var(--gap);
       }
+      @media (max-width: 1000px) {
+        .cards {
+          column-count: 2;
+        }
+      }
+      @media (max-width: 600px) {
+        .cards {
+          column-count: 1;
+        }
+      }
 
       .card {
         --yellow: #ffc600;
