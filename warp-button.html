@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cool Warp Button</title>
+</head>
+<body>
+
+  <a href="">
+    <span class="text">Download Now</span>
+    <svg>
+      <rect x="0" y="0" width="100%" height="100%"></rect>
+    </svg>
+  </a>
+
+
+
+  <style>
+    body {
+      background: thistle;
+      font-family: sans-serif;
+    }
+    a {
+      position: relative;
+      padding: 50px;
+      display: inline-block;
+    }
+    a svg {
+      display: block;
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      fill: none;
+      right: 0;
+      /* inset: 0; */
+      /* overflow: visible; */
+      /* fill: none; */
+      --size: 100;
+      stroke-width: 12;
+      stroke: red;
+      width: 100%;
+      height: 100%;
+      stroke-dasharray: 12 12;
+      stroke-dashoffset: 50%;
+      transition:  stroke-dashoffset 0.2s ease-in-out;
+    }
+
+    a:hover svg {
+      stroke-dashoffset: 0;
+    }
+  </style>
+
+
+
+</body>
+</html>

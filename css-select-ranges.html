@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./base.css">
+  <title>CSS Ranges</title>
+</head>
+
+<body>
+  <div class="grid">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+    <div class="item">4</div>
+    <div class="item">5</div>
+    <div class="item">6</div>
+    <div class="item">7</div>
+    <div class="item">8</div>
+    <div class="item">9</div>
+    <div class="item">10</div>
+    <div class="item">11</div>
+    <div class="item">12</div>
+    <div class="item">13</div>
+    <div class="item">14</div>
+    <div class="item">15</div>
+    <div class="item">16</div>
+    <div class="item">17</div>
+    <div class="item">18</div>
+    <div class="item">19</div>
+    <div class="item">20</div>
+    <div class="item">21</div>
+    <div class="item">22</div>
+    <div class="item">23</div>
+    <div class="item">24</div>
+    <div class="item">25</div>
+    <div class="item">26</div>
+    <div class="item">27</div>
+    <div class="item">28</div>
+    <div class="item">29</div>
+    <div class="item">30</div>
+    <div class="item">31</div>
+    <div class="item">32</div>
+    <div class="item">33</div>
+    <div class="item">34</div>
+    <div class="item">35</div>
+    <div class="item">36</div>
+    <div class="item">37</div>
+    <div class="item">38</div>
+    <div class="item">39</div>
+    <div class="item">40</div>
+    <div class="item">41</div>
+    <div class="item">42</div>
+    <div class="item">43</div>
+    <div class="item">44</div>
+    <div class="item">45</div>
+    <div class="item">46</div>
+    <div class="item">47</div>
+    <div class="item">48</div>
+    <div class="item">49</div>
+    <div class="item">50</div>
+  </div>
+
+  <style>
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      grid-auto-rows: 1fr;
+      height: 100vh;
+      transition: all .2s;
+      --yellow: #ffc600;
+      --blue: pink;
+      --evening-sky: #464956;
+      --bird-of-paradise: #E66F68;
+      --citrus-blast: #FFB229;
+    }
+
+    .item {
+      background-color: #eee;
+      border: 0.5px solid rgba(0,0,0,0.2);
+      padding: .5rem;
+      font-size: 2rem;
+      font-weight: 900;
+      text-align: center;
+      display: grid;
+      place-content: center;
+    }
+
+
+
+    /* CSS Ranges! */
+
+    /* 5th one to the 7th one */
+    .item:nth-child(n+5):nth-child(-n+7) {
+      background: var(--citrus-blast);
+    }
+    .item:nth-child(n+8):nth-child(-n+12) {
+      background: var(--evening-sky);
+      color: white;
+    }
+    .item:nth-child(n+26):nth-child(-n+30) {
+      background: palevioletred;
+    }
+
+    /* Second last to 5th last */
+    .item:nth-last-child(n+2):nth-last-child(-n+5) {
+      background: var(--bird-of-paradise);
+    }
+
+    🔥 Select ranges of elements in CSS with multiple nth-child selectors and negative
+    n values
+
+    🔥 Select ranges of elements in CSS with multiple nth-child selectors and negative n values
+
+
+    CSS nth-child() range hack!
+
+    /* positive is from */
+    /* - is up to */
+
+  </style>
+
+
+</body>
+
+</html>

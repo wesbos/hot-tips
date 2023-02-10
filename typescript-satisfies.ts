@@ -1,8 +1,14 @@
+/* eslint-disable */
 type Setting = string | number | { [key: string]: Setting } | Setting[];
 type Settings = Record<string, Setting>;
 
+function getData() {
+  return { data: 'good' };
+}
+
 const mySettings = {
   title: `Wes' Website`,
+  data: getData(),
   size: 200,
   overrides: [
     { 'font-size': '20px' },
@@ -11,6 +17,8 @@ const mySettings = {
     color: 'red',
   },
 } satisfies Settings;
+
+mySettings.overrides.at(0)?.['font-size'];
 
 // Valid Properties
 mySettings.title = 'New title';
@@ -63,3 +71,30 @@ const dictionaryMap = new Map([
 ]) satisfies DictionaryMap;
 
 dictionaryMap.get('welcome');
+
+// Narrowing
+
+type User = {
+  id: string | number;
+};
+
+const wes: User = {
+  id: 'wesbos',
+};
+
+
+console.log(wes.id.toUpperCase());
+console.log(wes.id.toFixed());
+wes.id = 200;
+wes.id = 'Cool';
+
+function logUser(user: User satisfies { id: string }) {
+  user.id
+}
+
+if (typeof wes.id === 'string') {
+  console.log(wes.id.toUpperCase());
+} else {
+  console.log(wes.id.toFixed());
+}
+

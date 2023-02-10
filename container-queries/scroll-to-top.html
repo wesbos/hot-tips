@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Container Queries</title>
+  <link rel="stylesheet" href="../base.css">
+</head>
+<body>
+
+<div class="container">
+  <div class="inner">
+  <h2>Container Queries</h2>
+  <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Atque, obcaecati. Quis quos iure doloremque fuga nulla ullam id recusandae mollitia maxime, odio, in quidem! Deserunt natus harum culpa officiis aliquam.</p>
+  <img src="https://picsum.photos/seed/picsum/1500/300" alt="">
+  <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quam cum sint, odit quia molestias atque aliquid tempora harum quo sequi laudantium ad nemo aut porro dolorem neque dolorum amet ex! Odit, iusto cum quod in a deserunt nesciunt natus quos totam ad neque, fugit possimus sequi rerum reiciendis sunt impedit doloribus? Eos qui minus mollitia repellendus omnis obcaecati nobis vitae laborum, est, quia voluptates odio beatae ducimus culpa magnam vel. Aspernatur velit ad eveniet distinctio nihil culpa porro quo dolore aliquid quasi ratione ex rerum natus quod, quidem sapiente labore, id tempore omnis impedit necessitatibus voluptas! Tempore perferendis a sapiente assumenda iste unde architecto, ullam, alias dolores libero delectus dicta corrupti tenetur nobis magnam possimus voluptatem nesciunt voluptatibus nam vero non quidem iure accusamus saepe? Cumque in qui ipsa tenetur aliquid cum possimus laboriosam, corporis mollitia, assumenda sapiente reiciendis sunt rerum perspiciatis nobis eveniet molestias dicta impedit consequuntur ab amet. Quod temporibus facere iusto. Ut, quod voluptate est rerum magni itaque. Porro cum praesentium quod culpa? Aperiam, itaque, asperiores earum minima dolore illum repellendus placeat fugit esse officiis minus quasi unde. Consequuntur dolorum, laboriosam magni quam cupiditate libero perferendis culpa ipsum vitae impedit voluptas, tempore illum sapiente voluptatum non natus?</p>
+  </div>
+</div>
+
+<style>
+.container {
+  container: article / inline-size;
+  border: 10px solid black;
+  max-width: 600px;
+  margin: 0 auto;
+  /* How much to spill out of the container */
+  --oversize: 10%;
+}
+
+.container img {
+  width: calc(100% + var(--oversize) * 2);
+  left: calc(var(--oversize) * -1);
+  position: relative;
+}
+
+.inner {
+  container: inner / inline-size;
+}
+
+@container inner (width >= calc(100cqw - 100px)) {
+  p { /* Only children */
+   color: green;
+  }
+}
+
+
+</style>
+</body>
+</html>

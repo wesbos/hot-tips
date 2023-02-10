@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JS in CSS</title>
+</head>
+<body>
+  <div style="--count: 0; --name: wes;">
+    <div> <div> <div> <div>
+      <h2>Hello <span data-bind="--name"></span></h2>
+      <button onClick="setState(event, 'count', (count) =>
+        parseInt(count) + 1)">+ Increment</button>
+      <button onClick="setState(event, 'count', (count) =>
+        parseInt(count) - 1)">+ Decrement</button>
+      <p>The count is <span data-bind="--count"></span></p>
+      </div> </div> </div> </div>
+  </div>
+
+  <script>
+    function setState(event, key, callback) {
+      const state = getComputedStyle(event.currentTarget);
+      const prop = `--${key}`;
+      const value = state.getPropertyValue(prop);
+      const element = event.currentTarget.closest(`[style*="${prop}"]`);
+      const updatedValue = callback(value);
+      element.style.setProperty(prop, updatedValue);
+      // Update Page
+      element.querySelectorAll(`[data-bind="${prop}"]`).forEach((el) => {
+        el.innerText = updatedValue;
+      });
+    }
+
+    // page load
+    document.querySelectorAll(`[data-bind]`).forEach((el) => {
+      setState({ currentTarget: el }, el.dataset.bind.replace(`--`, ``), (val) => val);
+    });
+  </script>
+
+</body>
+</html>
+
+
