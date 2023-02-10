@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cool Cards</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="cards">
+      <div class="card snake">
+        <div class="inner">
+          <h2>Sick Card #1</h2>
+          <p>And I'm the card's text!</p>
+          <p>
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Quas delectus eos inventore, explicabo cumque
+            aliquam atque fugit perferendis deleniti ipsum?
+          </p>
+          <button>Buy Now</button>
+        </div>
+      </div>
+      <div class="card snake" style="--color1: blue">
+        <div class="inner">
+          <h2>Sick Card #2</h2>
+          <p>And I'm the card's text!</p>
+          <p>
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Reiciendis ratione rerum pariatur officiis, aliquam
+            in beatae est rem laboriosam repudiandae repellat sed veniam ex quia illo, totam laborum nostrum. Magnam
+            quisquam officia amet assumenda deleniti? Inventore, eveniet aliquam. Quam ducimus blanditiis voluptatem
+            veritatis. Vitae id aliquam ipsa, cupiditate sit perspiciatis.
+          </p>
+          <button>Buy Now</button>
+        </div>
+      </div>
+      <div class="card snake" style="--color1: green; --color2: blue; --padding: 1px">
+        <div class="inner">
+          <h2>Sick Card #3</h2>
+          <p>And I'm the card's text!</p>
+          <button>Buy Now</button>
+        </div>
+      </div>
+      <div class="card snake" style="--color1: teal; --color2: #ff20dc">
+        <div class="inner">
+          <h2>Sick Card #4</h2>
+          <p>And I'm the card's text!</p>
+          <button>Buy Now</button>
+        </div>
+      </div>
+      <div class="card snake">
+        <div class="inner">
+          <h2>Sick Card #5</h2>
+          <p>And I'm the card's text!</p>
+          <p>
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Reiciendis ratione rerum pariatur officiis, aliquam
+            in beatae est rem laboriosam repudiandae repellat sed veniam ex quia illo, totam laborum nostrum. Magnam
+            quisquam officia amet assumenda deleniti? Inventore, eveniet aliquam. Quam ducimus blanditiis voluptatem
+            veritatis. Vitae id aliquam ipsa, cupiditate sit perspiciatis.
+          </p>
+          <button>Buy Now</button>
+        </div>
+      </div>
+      <div class="card snake">
+        <div class="inner">
+          <h2>Sick Card #6</h2>
+          <p>And I'm the card's text!</p>
+          <p>
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Reiciendis ratione rerum pariatur officiis, aliquam
+            in beatae est rem laboriosam repudiandae repellat sed veniam ex quia illo, totam laborum nostrum. Magnam
+            quisquam officia amet assumenda deleniti? Inventore, eveniet aliquam. Quam ducimus blanditiis voluptatem
+            veritatis. Vitae id aliquam ipsa, cupiditate sit perspiciatis.
+          </p>
+          <button>Buy Now</button>
+        </div>
+      </div>
+      <div class="card snake" style="--padding: 2px">
+        <div class="inner">
+          <h2>Sick Card #7</h2>
+          <p>And I'm the card's text!</p>
+          <button>Buy Now</button>
+        </div>
+      </div>
+      <div class="card snake">
+        <div class="inner">
+          <h2>Sick Card #8</h2>
+          <p>And I'm the card's text!</p>
+          <button>Buy Now</button>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      html {
+        box-sizing: border-box;
+        font-family: "inter";
+      }
+      *,
+      *:before,
+      *:after {
+        box-sizing: inherit;
+      }
+
+      body {
+        background: black;
+        color: white;
+      }
+      .cards {
+        column-count: 3;
+        --gap: 50px;
+        column-gap: var(--gap);
+        margin: var(--gap);
+      }
+
+      .card {
+        --yellow: #ffc600;
+        --pink: #ff3f8e;
+        --color1: var(--yellow);
+        --color2: var(--pink);
+        --inline: 10px;
+        --block: 0;
+        --duration: 150ms;
+        --padding: 4px;
+        --border: 1px;
+        --radius: 20px;
+        box-shadow: inset 0 0 0 var(--border) grey;
+        padding: var(--padding);
+        border-radius: calc(var(--radius) + var(--padding));
+        overflow: hidden;
+        display: grid;
+        margin-bottom: var(--gap);
+        cursor: pointer;
+      }
+
+      .inner {
+        background: black;
+        z-index: 2;
+        padding: 20px;
+        border-radius: var(--radius);
+      }
+
+      .card button {
+        display: block;
+        width: 100%;
+        border: 0;
+        color: white;
+        padding: 10px;
+        position: relative;
+        border-radius: var(--radius);
+        background: black;
+        font-weight: 900;
+        font-size: 15px;
+      }
+      .card button:before {
+        content: "";
+        display: block;
+        width: calc(100% + 2px);
+        height: calc(100% + 2px);
+        position: absolute;
+        top: -1px;
+        left: -1px;
+        z-index: -1;
+        border-radius: var(--radius);
+        background: linear-gradient(45deg, var(--color2), var(--color1));
+      }
+
+      .tail {
+        transition: all var(--duration);
+        width: var(--inline);
+        height: var(--block);
+        background: var(--color1);
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+      }
+
+      .tail.top {
+        background-image: linear-gradient(to right, var(--color1), var(--color2));
+        height: var(--inline);
+        width: var(--block);
+        transition-delay: calc(var(--duration) * 2);
+      }
+
+      .tail.right {
+        right: 0;
+        left: unset;
+        background: var(--color2);
+        transition-delay: var(--duration);
+      }
+
+      .tail.bottom {
+        height: var(--inline);
+        width: var(--block);
+        bottom: 0;
+        right: 0;
+        left: unset;
+        top: unset;
+        background-image: linear-gradient(to right, var(--color1), var(--color2));
+        transition-delay: 0ms;
+      }
+
+      .tail.left {
+        bottom: 0;
+        top: unset;
+        transition-delay: calc(var(--duration) * 3);
+      }
+
+      .snake:where(.start, :hover) .tail.top {
+        transition-delay: var(--duration);
+      }
+      .snake:where(.start, :hover) .tail.right {
+        transition-delay: calc(var(--duration) * 2);
+      }
+      .snake:where(.start, :hover) .tail.bottom {
+        transition-delay: calc(var(--duration) * 3);
+      }
+      .snake:where(.start, :hover) .tail.left {
+        transition-delay: 0ms;
+      }
+
+      .snake {
+        position: relative;
+      }
+
+      .snake.start .tail {
+        --block: 0;
+      }
+      .snake:hover .tail {
+        --block: 100%;
+      }
+
+      p {
+        line-height: 1.6;
+      }
+      h2 {
+        margin: 0;
+        text-align: center;
+      }
+
+      h2:after {
+        content: "";
+        display: block;
+        width: 100%;
+        height: var(--padding);
+        border-radius: 2px;
+        background: linear-gradient(to right, var(--color1), var(--color2));
+        margin-top: 10px;
+      }
+    </style>
+
+    <script>
+      const cards = document.querySelectorAll(`.card`);
+      // Add the tails to each card
+      cards.forEach((card) => {
+        [
+          `top`,
+          `right`,
+          `bottom`,
+          `left`,
+        ].forEach((side) => {
+          const tail = document.createElement(`div`);
+          tail.classList.add(`tail`, side);
+          card.appendChild(tail);
+        });
+        // if that card has no colours, add some
+        if (!card.style.getPropertyValue(`--color1`)) {
+          card.style.setProperty(`--color1`, `hsl(${Math.random() * 360}, 100%, 50%)`);
+          card.style.setProperty(`--color2`, `hsl(${Math.random() * 360}, 100%, 50%)`);
+        }
+      });
+
+      setInterval(() => {
+        cards.forEach((card) => {
+          if (!card.style.getPropertyValue(`--color1`)) {
+            card.style.setProperty(`--color1`, `hsl(${Math.random() * 360}, 100%, 50%)`);
+            card.style.setProperty(`--color2`, `hsl(${Math.random() * 360}, 100%, 50%)`);
+          }
+        });
+      }, 7000);
+    </script>
+  </body>
+</html>
