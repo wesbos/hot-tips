@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div class="sample associative">
+      <p>CSS <span class="friend">RELATIVE</span> COLORS</p>
+      <div class="swatches">
+        <p style="--g1: var(--ass1); --g2: var(--ass2)" class="sub">colors</p>
+        <span class="swatch" style="--swatch: var(--ass1)">Associative</span>
+        <span class="swatch" style="--swatch: var(--ass2)">colors</span>
+        <p style="--g1: var(--complimentary); --g2: var(--color)" class="sub">Complimentary color</p>
+        <span class="swatch" style="--swatch: var(--complimentary)">complimentary</span>
+        <p style="--g1: var(--triadic1); --g2: var(--triadic2)" class="sub">Triadic colors</p>
+        <span class="swatch" style="--swatch: var(--triadic1)">Triadic</span>
+        <span class="swatch" style="--swatch: var(--triadic2)">colors</span>
+        <p style="--g1: var(--tetradic1); --g2: var(--tetradic2)" class="sub">Tetradic colors</p>
+        <span class="swatch" style="--swatch: var(--tetradic1)">Tetr</span>
+        <span class="swatch" style="--swatch: var(--tetradic2)">adic</span>
+        <span class="swatch" style="--swatch: var(--tetradic3)">Colors</span>
+        <p class="sub">Lighter + Darker</p>
+        <span class="swatch dark" style="--swatch: var(--darker1)">×</span>
+        <span class="swatch dark" style="--swatch: var(--darker2)">×</span>
+        <span class="swatch dark" style="--swatch: var(--darker3)">×</span>
+        <span class="swatch dark" style="--swatch: var(--darker4)">×</span>
+        <span class="swatch dark" style="--swatch: var(--darker5)">×</span>
+        <span class="swatch dark" style="--swatch: var(--darker6)">×</span>
+        <span class="swatch dark" style="--swatch: var(--darker7)">×</span>
+        <span class="swatch dark" style="--swatch: var(--darker8)">×</span>
+        <span class="swatch dark" style="--swatch: var(--darker9)">×</span>
+        <span class="swatch dark" style="--swatch: var(--darker10)">×</span>
+        <span class="swatch dark" style="--swatch: var(--darker11)">×</span>
+        <span class="swatch dark" style="--swatch: var(--darker12)">×</span>
+        <span class="swatch dark" style="--swatch: var(--darker13)">×</span>
+        <span class="swatch dark" style="--swatch: var(--darker14)">×</span>
+        <span class="swatch dark" style="--swatch: var(--darker15)">×</span>
+        <span class="swatch dark" style="--swatch: var(--darker16)">×</span>
+        <span class="swatch dark" style="--swatch: var(--darker17)">×</span>
+        <span class="swatch dark" style="--swatch: var(--darker18)">×</span>
+        <br />
+        <span class="swatch dark" style="--swatch: var(--lighter1)">×</span>
+        <span class="swatch dark" style="--swatch: var(--lighter2)">×</span>
+        <span class="swatch dark" style="--swatch: var(--lighter3)">×</span>
+        <span class="swatch dark" style="--swatch: var(--lighter4)">×</span>
+        <span class="swatch dark" style="--swatch: var(--lighter5)">×</span>
+        <span class="swatch dark" style="--swatch: var(--lighter6)">×</span>
+        <span class="swatch dark" style="--swatch: var(--lighter7)">×</span>
+        <span class="swatch dark" style="--swatch: var(--lighter8)">×</span>
+        <span class="swatch dark" style="--swatch: var(--lighter9)">×</span>
+        <span class="swatch dark" style="--swatch: var(--lighter10)">×</span>
+        <span class="swatch dark" style="--swatch: var(--lighter11)">×</span>
+        <span class="swatch dark" style="--swatch: var(--lighter12)">×</span>
+        <span class="swatch dark" style="--swatch: var(--lighter13)">×</span>
+        <span class="swatch dark" style="--swatch: var(--lighter14)">×</span>
+        <span class="swatch dark" style="--swatch: var(--lighter15)">×</span>
+        <span class="swatch dark" style="--swatch: var(--lighter16)">×</span>
+        <span class="swatch dark" style="--swatch: var(--lighter17)">×</span>
+        <span class="swatch dark" style="--swatch: var(--lighter18)">×</span>
+      </div>
+    </div>
+
+    <style>
+      .demo {
+        --convert: rgb(from #bada55 r g b / 0.5);
+        background: var(--convert);
+      }
+
+      :root {
+        --color: #b1a2ee;
+        --darker: hsl(from var(--color) h s calc(l - 20%));
+        --lighter: hsl(from var(--color) h s calc(l + 40%));
+        --opaque: hsl(from var(--darker) h s l / 0.2);
+
+        --ass1: hsl(from var(--color) calc(h + 30deg) s l);
+        --ass2: hsl(from var(--color) calc(h - 60deg) s l);
+
+        --complimentary: hsl(from var(--color) calc(h + 180deg) s l);
+
+        --triadic1: hsl(from var(--color) calc(h + 120deg) s l);
+        --triadic2: hsl(from var(--color) calc(h - 120deg) s l);
+
+        --tetradic1: hsl(from var(--color) calc(h + 90deg) s l);
+        --tetradic2: hsl(from var(--color) calc(h - 90deg) s l);
+        --tetradic3: hsl(from var(--color) calc(h + 180deg) s l);
+
+        --darker1: hsl(from var(--color) h s calc(l * 0.1));
+        --darker2: hsl(from var(--color) h s calc(l * 0.15));
+        --darker3: hsl(from var(--color) h s calc(l * 0.2));
+        --darker4: hsl(from var(--color) h s calc(l * 0.25));
+        --darker5: hsl(from var(--color) h s calc(l * 0.3));
+        --darker6: hsl(from var(--color) h s calc(l * 0.35));
+        --darker7: hsl(from var(--color) h s calc(l * 0.4));
+        --darker8: hsl(from var(--color) h s calc(l * 0.45));
+        --darker9: hsl(from var(--color) h s calc(l * 0.5));
+        --darker10: hsl(from var(--color) h s calc(l * 0.55));
+        --darker11: hsl(from var(--color) h s calc(l * 0.6));
+        --darker12: hsl(from var(--color) h s calc(l * 0.65));
+        --darker13: hsl(from var(--color) h s calc(l * 0.7));
+        --darker14: hsl(from var(--color) h s calc(l * 0.75));
+        --darker15: hsl(from var(--color) h s calc(l * 0.8));
+        --darker16: hsl(from var(--color) h s calc(l * 0.85));
+        --darker17: hsl(from var(--color) h s calc(l * 0.9));
+        --darker18: hsl(from var(--color) h s calc(l * 0.95));
+        --lighter1: hsl(from var(--color) h s calc(l * 1.1));
+        --lighter2: hsl(from var(--color) h s calc(l * 1.15));
+        --lighter3: hsl(from var(--color) h s calc(l * 1.2));
+        --lighter4: hsl(from var(--color) h s calc(l * 1.25));
+        --lighter5: hsl(from var(--color) h s calc(l * 1.3));
+        --lighter6: hsl(from var(--color) h s calc(l * 1.35));
+        --lighter7: hsl(from var(--color) h s calc(l * 1.4));
+        --lighter8: hsl(from var(--color) h s calc(l * 1.45));
+        --lighter9: hsl(from var(--color) h s calc(l * 1.5));
+        --lighter10: hsl(from var(--color) h s calc(l * 1.55));
+        --lighter11: hsl(from var(--color) h s calc(l * 1.6));
+        --lighter12: hsl(from var(--color) h s calc(l * 1.65));
+        --lighter13: hsl(from var(--color) h s calc(l * 1.7));
+        --lighter14: hsl(from var(--color) h s calc(l * 1.75));
+        --lighter15: hsl(from var(--color) h s calc(l * 1.8));
+        --lighter16: hsl(from var(--color) h s calc(l * 1.85));
+        --lighter17: hsl(from var(--color) h s calc(l * 1.9));
+        --lighter18: hsl(from var(--color) h s calc(l * 1.95));
+      }
+
+      .sample {
+        --background: var(--color);
+        background: var(--background);
+        /* Not yet 100% working with this  */
+        color: var(--lighter);
+        padding: 0px;
+        font-size: 50px;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
+          "Open Sans", "Helvetica Neue", sans-serif;
+        font-stretch: 150%;
+        text-transform: uppercase;
+        font-weight: 900;
+        text-align: center;
+        font-size: 0;
+      }
+
+      .swatch {
+        background: var(--swatch);
+        font-size: 20px;
+        padding: 10px;
+        display: inline-block;
+        color: color-contrast(var(--swatch) vs var(--lighter), var(--darker));
+      }
+      .swatch.dark {
+        font-size: 10px;
+      }
+      span.friend {
+        color: var(--darker);
+      }
+      p {
+        margin: 0;
+        text-align: center;
+      }
+      p.sub {
+        font-size: 20px;
+        margin: 10px;
+        padding: 5px;
+        background: linear-gradient(45deg, var(--g1), var(--g2));
+        border-top: 5px solid var(--darer);
+      }
+      body {
+        background: var(--color);
+        margin: 0;
+      }
+    </style>
+  </body>
+</html>
