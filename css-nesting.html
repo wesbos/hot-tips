@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Nesting Selectors</title>
+  </head>
+  <body>
+    <div class="container">
+      <h2>CSS Nesting Selectors</h2>
+      <p class="text">Pretty cool</p>
+      <p class="special">Very Special</p>
+      <p class="special">ALso special</p>
+      <div class="special">
+        <div class="special">
+          <div class="special">
+            <div class="special">
+              <div class="special">
+                <div class="special">
+                  <div class="special">
+                    <div class="special">
+                      <div class="special">
+                        <div class="special">10 level deep</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <a href="https://wesbos.com">WesBos.com</a>
+      <a href="https://google.com">google.com</a>
+      <a href="https://google.com"><span>google</span><span>.</span>com</a>
+    </div>
+
+    <style>
+      .container {
+        border: 1px solid red;
+        container: article / inline-size;
+        /* Nested Selectors */
+        .text {
+          font-size: 100px;
+        }
+        /* & matches the parent selector */
+        /* Same as above */
+        & .special {
+          color: red;
+          /* .special + .special */
+          & + & {
+            border: 1px solid blue;
+          }
+          /* 10 levels deep of the .special */
+          & & & & & & & & & & {
+            background: red;
+          }
+        }
+        /* Nesting Element Selectors - must use &*/
+        & a {
+          color: red;
+          /* Nesting Pseudo Selectors */
+          &:hover {
+            color: green;
+          }
+          /* Compound */
+          &[href*="wesbos"],
+          &:is(.special),
+          &:has(img) {
+            color: blue;
+          }
+          /* Descendant Selectors */
+          > span {
+            background: purple;
+            + span {
+              background: orange;
+            }
+          }
+        }
+        /* Siblings */
+
+        /* Media Queries */
+        @media (max-width: 600px) {
+          border-color: blue;
+          .text {
+            font-size: 50px;
+          }
+        }
+        & p {
+          /* Container Queries */
+          @container (max-width: 600px) {
+            background: blue;
+          }
+        }
+        resize: both;
+        overflow: hidden;
+      }
+      /* use PostCSS Nesting Plugin to use today */
+    </style>
+  </body>
+</html>
