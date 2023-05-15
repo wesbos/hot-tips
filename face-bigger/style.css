@@ -1,0 +1,26 @@
+/* CSS reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html {
+  margin: 0;
+  padding: 0;
+  --scale: 0.25;
+}
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+video {
+  width: 100%;
+  height: 100vh;
+  object-fit: cover;
+  scale: var(--scale);
+  transition: scale 0.5s ease-in-out;
+  transform: translateY(-30%);
+  filter: invert(500%) hue-rotate(80deg) saturate(300%);
+}

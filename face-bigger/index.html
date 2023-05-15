@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FaceBigger</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <video src=""></video>
+    <script>
+      const video = document.querySelector(`video`);
+      // Get the webcam video and display it in the video element
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => {
+          video.srcObject = stream;
+          video.onloadedmetadata = (e) => {
+            video.play();
+          };
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+      let scale = 0.25;
+      video.addEventListener(`click`, () => {
+        document.body.style.setProperty(`--scale`, (scale += 0.1));
+      });
+    </script>
+  </body>
+</html>
