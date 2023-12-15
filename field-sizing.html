@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Field Sizing</title>
+  </head>
+  <body>
+    <form>
+      <p>Hey,<input type="text" id="name" value="wes" />, Nice to meet you. Let's get some info on your car.</p>
+      <select name="" id="">
+        <option value="2024">2024</option>
+        <option value="2023">2023</option>
+        <option value="2022">2022</option>
+        <option value="2021">2021</option>
+        <option value="2020">2020</option>
+      </select>
+      <select name="" id="">
+        <option value="volvo">Volvo</option>
+        <option value="saab">Toyota</option>
+        <option value="bmw">Bavarian Motor Works</option>
+      </select>
+
+      <select name="" id="">
+        <!-- Trim levels -->
+        <option value="XSR">XSR</option>
+        <option value="XSE">XSE</option>
+        <option value="XLE">XLE</option>
+        <option value="LE">LE</option>
+        <option value="SE">SE</option>
+        <option value="L">L</option>
+        <option value="LE">LE</option>
+      </select>
+
+      <label for="">Attached Photos</label>
+      <input type="file" value="photo" />
+      <input type="file" value="photo" />
+
+      <label for="bio">Notes</label>
+      <textarea name="notes" id="notes"></textarea>
+    </form>
+
+    <style>
+      form {
+        --accent: #848484;
+        max-width: 550px;
+        background: white;
+        padding: 20px;
+        border-radius: 20px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      }
+
+      input,
+      textarea,
+      select {
+        field-sizing: content;
+      }
+
+      input[type="file"] {
+        border: 1px solid var(--accent);
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 10px;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 2lh;
+        max-height: 5lh;
+      }
+
+      label {
+        display: block;
+        margin-block: 10px;
+      }
+
+      input,
+      textarea,
+      select {
+        font-size: 20px;
+        font-family: "Geist mono";
+        padding: 5px 10px;
+        border: 1px solid var(--accent);
+        border-radius: 5px;
+      }
+      body {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: "Geist mono";
+        font-size: 20px;
+        background-size: 100% 100%;
+        background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px,
+          0px 0px;
+        background-image: radial-gradient(18% 28% at 24% 50%, #cefaffff 7%, #073aff00 100%),
+          radial-gradient(18% 28% at 18% 71%, #ffffff59 6%, #073aff00 100%),
+          radial-gradient(70% 53% at 36% 76%, #73f2ffff 0%, #073aff00 100%),
+          radial-gradient(42% 53% at 15% 94%, #ffffffff 7%, #073aff00 100%),
+          radial-gradient(42% 53% at 34% 72%, #ffffffff 7%, #073aff00 100%),
+          radial-gradient(18% 28% at 35% 87%, #ffffffff 7%, #073aff00 100%),
+          radial-gradient(31% 43% at 7% 98%, #ffffffff 24%, #073aff00 100%),
+          radial-gradient(21% 37% at 72% 23%, #d3ff6d9c 24%, #073aff00 100%),
+          radial-gradient(35% 56% at 91% 74%, #8a4ffff5 9%, #073aff00 100%),
+          radial-gradient(74% 86% at 67% 38%, #6dffaef5 24%, #073aff00 100%),
+          linear-gradient(125deg, #4eb5ffff 1%, #4c00fcff 100%);
+      }
+
+      html {
+        box-sizing: border-box;
+      }
+      *,
+      *:before,
+      *:after {
+        box-sizing: inherit;
+      }
+    </style>
+  </body>
+</html>
