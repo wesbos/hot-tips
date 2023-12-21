@@ -1,0 +1,21 @@
+{
+  "name": "vscode-custom-css-inject",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsx server.ts"
+  },
+  "keywords": [],
+  "author": "Wes Bos (https://wesbos.com/)",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "linkedom": "^0.16.5",
+    "tsx": "^4.7.0",
+    "ws": "^8.15.1"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.10"
+  }
+}

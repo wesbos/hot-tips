@@ -1,0 +1,30 @@
+/* Test */
+
+/* Method 1: Fix it! */
+/* Solution: Fix it! */
+/** Problem 1:  */
+/* todo: Fix later */
+/** this is a regular comment*/
+/** this is a
+  multi line comment
+*/
+
+.monaco-editor {
+  & span.ced-1-TextEditorDecorationType22-1,
+  span.ced-1-TextEditorDecorationType26-1 {
+    background: #ffc600;
+    box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.01), 0 0 10px 10px rgba(0, 0, 0, 0.1);
+    font-family: "Radnika Next";
+    font-weight: 900;
+    padding: 0px;
+    line-height: 1.5;
+    color: black !important;
+    display: inline-block;
+    transform: rotate(-1deg);
+  }
+}
+
+/* this is handy for testing if its working */
+.editor-container {
+  border: 2px solid orange !important;
+}
