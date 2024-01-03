@@ -32,6 +32,7 @@ async function injectCSS() {
     script.type = 'text/javascript';
     script.id = customCSSId;
     script.innerHTML = js;
+
     document.body.insertAdjacentElement('afterend', script);
   }
   // Otherwise update the existing one
@@ -76,7 +77,7 @@ async function watchFile() {
         css,
       })
     );
-    // await injectCSS();
+    await injectCSS();
   }
 }
 

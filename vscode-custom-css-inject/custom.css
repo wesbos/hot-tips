@@ -1,14 +1,3 @@
-/* Test */
-
-/* Method 1: Fix it! */
-/* Solution: Fix it! */
-/** Problem 1:  */
-/* todo: Fix later */
-/** this is a regular comment*/
-/** this is a
-  multi line comment
-*/
-
 .monaco-editor {
   & span.ced-1-TextEditorDecorationType22-1,
   span.ced-1-TextEditorDecorationType26-1 {
@@ -26,5 +15,46 @@
 
 /* this is handy for testing if its working */
 .editor-container {
-  border: 2px solid orange !important;
+  /* border: 2px solid blue !important; */
+}
+
+.mac {
+  font-family: "Geist Mono" !important;
+  --monaco-monospace-font: "Geist Mono" !important;
+  letter-spacing: -0.25px;
+}
+
+.explorer-folders-view .monaco-list-row {
+  padding-left: 0 !important;
+}
+
+/* Multi-line tabs */
+
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab {
+  --editor-group-tab-height: 1.2;
+  padding: 8px;
+  & .monaco-icon-label:before {
+    background-position: top left;
+    padding-right: 2px;
+  }
+  /*
+    <div class="monaco-icon-label-container">
+      <span class="monaco-icon-name-container">
+        <a class="label-name">server.ts</a>
+      </span>
+      <span class="monaco-icon-description-container">
+        <span class="label-description">vscode-custom-css-inject</span>
+      </span>
+    </div>
+  */
+  & span.monaco-icon-label-container {
+    line-height: 1;
+  }
+  & span.monaco-icon-description-container {
+    display: block;
+    line-height: 1;
+    & .label-description {
+      margin: 0;
+    }
+  }
 }
