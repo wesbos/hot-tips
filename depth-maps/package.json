@@ -1,0 +1,18 @@
+{
+  "name": "depth-maps",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "vite"
+  },
+  "author": "Wes Bos (https://wesbos.com/)",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@types/three": "^0.160.0",
+    "@xenova/transformers": "^2.14.2",
+    "three": "^0.160.1",
+    "vite": "^5.0.12"
+  }
+}

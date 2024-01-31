@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Depth Visualizer</title>
+    <link rel="icon" href="https://fav.farm/🙃" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <script type="module" src="./depth-client.ts"></script>
+    <div class="app">
+      <div class="controls">
+        <div>
+          <img class="map" />
+        </div>
+        <div>
+          <label id="upload-button" for="upload">
+            Upload Image
+            <input id="upload" value="0.75" type="file" accept="image/*" />
+          </label>
+        </div>
+        <div>
+          <label for="depth">
+            Depth
+            <input id="depth" type="range" min="0" max="5" step="0.01" />
+          </label>
+        </div>
+        <div>
+          <button class="getWebcam" title="Detect from Webcam">
+            <video src="" class="webcam"></video>
+          </button>
+        </div>
+      </div>
+      <div id="container"></div>
+    </div>
+
+    <canvas class="webcam"></canvas>
+  </body>
+</html>

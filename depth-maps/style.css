@@ -1,0 +1,72 @@
+html {
+  box-sizing: border-box;
+  padding: 0;
+  font-family: "Geist Mono";
+  background: black;
+  color: white;
+  font-size: 16px;
+}
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+.app {
+  max-width: 900px;
+  border: 1px solid white;
+  margin: 0 auto;
+}
+
+.map {
+  max-width: 250px;
+}
+
+.webcam {
+  width: 200px;
+}
+canvas.webcam {
+  display: none;
+}
+canvas.viewer {
+  width: 100% !important;
+  height: auto !important;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(100px, 1fr));
+  & > * {
+    border: 1px solid white;
+    display: flex;
+    place-items: center;
+    flex-wrap: wrap;
+    text-align: center;
+    img,
+    video {
+      width: 100%;
+      height: 100%;
+      max-height: 50px;
+      object-fit: contain;
+    }
+  }
+}
+
+input[type="file"] {
+  display: block;
+  appearance: none;
+  width: 100%;
+  height: 50px;
+  display: flex;
+  place-items: center;
+}
+
+body {
+  min-height: 100vh;
+}
+.loading {
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle fill="%23B0FF00" stroke="%23B0FF00" stroke-width="15" r="15" cx="40" cy="65"><animate attributeName="cy" calcMode="spline" dur="0.5" values="65;135;65;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.4"></animate></circle><circle fill="%23B0FF00" stroke="%23B0FF00" stroke-width="15" r="15" cx="100" cy="65"><animate attributeName="cy" calcMode="spline" dur="0.5" values="65;135;65;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.2"></animate></circle><circle fill="%23B0FF00" stroke="%23B0FF00" stroke-width="15" r="15" cx="160" cy="65"><animate attributeName="cy" calcMode="spline" dur="0.5" values="65;135;65;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="0"></animate></circle></svg>')
+    center;
+  background-size: 50px;
+  background-repeat: no-repeat;
+}
