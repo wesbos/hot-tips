@@ -1,0 +1,18 @@
+{
+  "include": [
+    "./**/*"
+  ],
+
+  "compilerOptions": {
+    "strict": true,
+    "lib": [
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "module": "nodenext",
+    "target": "esnext"
+  }
+}

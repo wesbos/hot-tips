@@ -1,0 +1,15 @@
+{
+  "name": "get-user-media-framer",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Wes Bos (https://wesbos.com/)",
+  "license": "MIT",
+  "dependencies": {
+    "@preact/signals": "^1.2.3",
+    "vite": "^5.2.8"
+  }
+}
