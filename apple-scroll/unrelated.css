@@ -1,0 +1,100 @@
+:root {
+  --bg-color: hsl(240deg 10% 12%);
+  --bg-grain: url("data:image/svg+xml,%3Csvg viewBox='0 0 600 600' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  --shadow-size: max(140px, 40vw);
+  --shadow-size-fallback: 40vw;
+  --shadow-blur: 60;
+  --color-1: #6328da;
+  --color-2: #ff1bf1;
+  --color-3: #008cea;
+  --color-4: #02eff9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  font-family: "Mona Sans", sans-serif;
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  background: var(--bg-color);
+  z-index: 1;
+  position: relative;
+}
+
+body:before {
+  content: "";
+  position: absolute;
+  display: block;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  opacity: 0.5;
+  opacity: 1;
+  --size: 80vmax;
+  mix-blend-mode: hue;
+  background: radial-gradient(farthest-side at bottom left, var(--color-1), transparent var(--size)),
+    radial-gradient(farthest-side at bottom right, var(--color-2), transparent var(--size)),
+    radial-gradient(farthest-side at top right, var(--color-3), transparent var(--size)),
+    radial-gradient(farthest-side at top left, var(--color-4), transparent var(--size));
+}
+
+body:after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  filter: contrast(50%) brightness(10%);
+  background: var(--bg-grain);
+  background-size: 500px;
+  -webkit-mask-image: radial-gradient(ellipse, transparent 35%, black 100%);
+}
+main {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+}
+
+main h1 {
+  color: white;
+  font-size: 20vw;
+  font-weight: 650;
+  mix-blend-mode: color-burn;
+  position: relative;
+  z-index: -1;
+}
+
+.card {
+  background-color: #008cea;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  &.featured {
+    background-color: #ff1bf1;
+    --size: 100vmax;
+    --shadow-size: max(200px, 40vw);
+    span {
+      color: #6328da;
+      padding: 0 0.5rem;
+    }
+  }
+}
