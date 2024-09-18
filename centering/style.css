@@ -1,0 +1,56 @@
+body {
+  align-content: center;
+}
+
+.albums {
+  align-content: center;
+}
+
+body {
+  background-image: radial-gradient(
+      farthest-corner circle at 50% 115% in oklch,
+      oklch(80% 0.43 360/ 0.8) 0%,
+      oklch(90% 0.3 200/ 0.8) 100%
+    ),
+    url("https://i.scdn.co/image/ab67616d0000b273f53cbcf13f74e5cbab40e7fb");
+  min-height: 100vh;
+  background-size: cover;
+}
+
+.albums {
+  border: 2px solid white;
+  height: 50dvh;
+  width: 90dvw;
+  overflow: hidden;
+  resize: both;
+  margin: 0 auto;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(20px);
+  text-align: center;
+  img,
+  video {
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    width: 200px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.1);
+    margin: 10px;
+  }
+}
+
+html {
+  box-sizing: border-box;
+}
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
