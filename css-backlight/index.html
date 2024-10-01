@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <video class="filter-blur"></video>
+    <div class="tools">
+      <img
+        class="tool"
+        src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg"
+        alt=""
+      />
+      <img class="tool" src="https://upload.wikimedia.org/wikipedia/commons/9/95/Vue.js_Logo_2.svg" alt="" />
+      <img
+        class="tool"
+        src="https://upload.wikimedia.org/wikipedia/commons/9/98/Microsoft_Edge_logo_%282019%29.svg"
+        alt=""
+      />
+      <img class="tool" src="https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg" alt="" />
+    </div>
+
+    <svg width="0" height="0">
+      <filter id="blur-and-scale" y="-50%" x="-50%" width="200%" height="200%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="40" result="blurred" />
+        <feColorMatrix type="saturate" in="blurred" values="15" />
+        <feComposite in="SourceGraphic" operator="over" />
+      </filter>
+    </svg>
+
+    <script>
+      const videoElement = document.querySelector(`video`);
+
+      async function startWebcam() {
+        try {
+          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            videoElement.srcObject = stream;
+            videoElement.play();
+          } else {
+            console.error(`getUserMedia not supported on your browser!`);
+          }
+        } catch (error) {
+          console.error(`Error accessing webcam: `, error);
+        }
+      }
+
+      startWebcam();
+    </script>
+  </body>
+</html>

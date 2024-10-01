@@ -1,0 +1,34 @@
+body {
+  height: 100vh;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  align-items: start;
+  background: black;
+}
+
+aside {
+  display: flex;
+  gap: 45px;
+}
+
+aside .icon {
+  height: 80px;
+  width: 80px;
+}
+
+.tool {
+  width: 100px;
+  height: 100px;
+  filter: url(#blur-and-scale);
+}
+
+.filter-blur {
+  filter: url(#blur-and-scale);
+}
+
+video {
+  width: 80%;
+  margin: 20px auto;
+  border-radius: 20px;
+}
