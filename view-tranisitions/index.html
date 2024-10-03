@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="../base.css" />
+    <link rel="stylesheet" href="./style.css" />
+    <script type="module" src="./scripts.js"></script>
+  </head>
+  <body>
+    <div class="controls">
+      <button class="randomize">Randomize</button>
+      <button class="order">Order</button>
+    </div>
+    <div class="grid">
+      <div class="item item1" data-item="1" style="view-transition-name: item1">
+        <video class="output" autoplay muted />
+      </div>
+      <div class="item item2" data-item="2" style="view-transition-name: item2">
+        <video class="output" autoplay muted />
+      </div>
+      <div class="item item3" data-item="3" style="view-transition-name: item3">
+        <video class="output" autoplay muted />
+      </div>
+      <div class="item item4" data-item="4" style="view-transition-name: item4">
+        <video class="output" autoplay muted />
+      </div>
+      <div class="item item5" data-item="5" style="view-transition-name: item5">
+        <video class="output" autoplay muted />
+      </div>
+      <div class="item item6" data-item="6" style="view-transition-name: item6">
+        <video class="output" autoplay muted />
+      </div>
+      <div class="item item7" data-item="7" style="view-transition-name: item7">
+        <video class="output" autoplay muted />
+      </div>
+      <div class="item item8" data-item="8" style="view-transition-name: item8">
+        <video class="output" autoplay muted />
+      </div>
+      <div class="item item9" data-item="9" style="view-transition-name: item9">
+        <video class="output" autoplay muted />
+      </div>
+      <div class="item item10" data-item="10" style="view-transition-name: item10">
+        <video class="output" autoplay muted />
+      </div>
+      <div class="item item11" data-item="11" style="view-transition-name: item11">
+        <video class="output" autoplay muted />
+      </div>
+      <div class="item item12" data-item="12" style="view-transition-name: item12">
+        <video class="output" autoplay muted />
+      </div>
+      <div class="item item13" data-item="13" style="view-transition-name: item13">
+        <video class="output" autoplay muted />
+      </div>
+      <div class="item item14" data-item="14" style="view-transition-name: item14">
+        <video class="output" autoplay muted />
+      </div>
+      <div class="item item15" data-item="15" style="view-transition-name: item15">
+        <video class="output" autoplay muted />
+      </div>
+      <div class="item item16" data-item="16" style="view-transition-name: item16">
+        <video class="output" autoplay muted />
+      </div>
+    </div>
+
+    <script>
+      const grid = document.querySelector(`.grid`);
+
+      document.querySelector(`.randomize`).addEventListener(`click`, () => {
+        const shuffledItems = shuffleItems(grid.children);
+        document.startViewTransition(() => {
+          grid.replaceChildren(...shuffledItems);
+        });
+      });
+
+      function shuffleItems(items) {
+        return Array.from(items)
+          .map((value) => ({ value, sort: Math.random() }))
+          .sort((a, b) => a.sort - b.sort)
+          .map(({ value }) => value)
+          .map((item, index) => {
+            item.dataset.size = index % 3 === 0 ? `wide` : index % 3 === 1 ? `tall` : ``;
+            return item;
+          });
+      }
+
+      document.querySelector(`.order`).addEventListener(`click`, () => {
+        const grid = document.querySelector(`.grid`);
+        const items = Array.from(grid.children);
+        console.log(items);
+        document.startViewTransition(() => {
+          const orderedItems = items
+            .map((value) => ({ value, sort: parseInt(value.dataset.item) }))
+            .sort((a, b) => a.sort - b.sort)
+            .map(({ value }) => value);
+          grid.innerHTML = ``;
+          orderedItems.forEach((item) => grid.appendChild(item));
+        });
+      });
+
+      document.querySelector(`.add`).addEventListener(`click`, () => {
+        const grid = document.querySelector(`.grid`);
+        const item = document.createElement(`div`);
+        const itemId = `item${grid.children.length + 1}`;
+        item.classList.add(`item`, itemId);
+        item.textContent = `Item ${grid.children.length + 1}`;
+        item.style.setProperty(`view-transition-name`, itemId);
+        item.classList.add(`new`);
+        document.startViewTransition(() => {
+          grid.prepend(item);
+        });
+      });
+    </script>
+  </body>
+</html>

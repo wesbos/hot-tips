@@ -1,0 +1,338 @@
+.item {
+  view-transition-class: item;
+}
+::view-transition-group(*.item) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(1, -0.62, 0.61, 1.37);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-gap: 0.5rem;
+  margin: 0.5rem;
+  grid-auto-flow: dense;
+  perspective: 500px;
+}
+
+body {
+  perspective: 500px;
+}
+body:has(input.stacked:checked) .grid {
+  grid-template-columns: 1fr;
+}
+body:has(input.griddy:checked) .grid {
+  /* grid-template-columns: 1fr; */
+  .item {
+  }
+}
+body:has(input.variable:checked) .grid {
+  .item {
+    &[data-size="tall"] {
+      grid-row: span 4;
+      grid-column: span 1;
+    }
+    &[data-size="wide"] {
+      grid-column: span 4;
+      grid-row: span 1;
+    }
+  }
+}
+
+.item {
+  background-color: #efefef;
+  background-image: var(--background);
+  background-size: cover;
+  border-radius: 5px;
+  box-shadow: 0 0 5px 5px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s;
+  text-align: center;
+  overflow: hidden;
+  font-size: 0;
+  align-content: center;
+  grid-column: span 2;
+  grid-row: span 2;
+  aspect-ratio: 1;
+  --x: 0%;
+  --y: 0%;
+  --rotateY: 0;
+  --rotateX: 0;
+  transform: rotateY(var(--rotateY)) rotateX(var(--rotateX));
+  img {
+    width: 100%;
+  }
+  video {
+    width: 400%;
+    height: 400%;
+    object-fit: cover;
+    margin: 0;
+    padding: 0;
+    transform: translate(var(--x), var(--y));
+  }
+
+  &.item2,
+  &.item6,
+  &.item10,
+  &.item14 {
+    --x: -25%;
+  }
+  &.item3,
+  &.item7,
+  &.item11,
+  &.item15 {
+    --x: -50%;
+  }
+  &.item4,
+  &.item8,
+  &.item12,
+  &.item16 {
+    --x: -75%;
+  }
+  &.item5,
+  &.item6,
+  &.item7,
+  &.item8 {
+    --y: -25%;
+  }
+  &.item9,
+  &.item10,
+  &.item11,
+  &.item12 {
+    --y: -50%;
+  }
+  &.item13,
+  &.item14,
+  &.item15,
+  &.item16 {
+    --y: -75%;
+  }
+}
+
+@keyframes scale-up {
+  from {
+    transform: scale(0.5);
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.item1 {
+  background-color: #ff6f61;
+  color: #fff;
+}
+.item2 {
+  background-color: #6b5b95;
+  color: #fff;
+}
+.item3 {
+  background-color: #88b04b;
+  color: #fff;
+}
+.item4 {
+  background-color: #f7cac9;
+  color: #000;
+}
+.item5 {
+  background-color: #92a8d1;
+  color: #000;
+}
+.item6 {
+  background-color: #955251;
+  color: #fff;
+}
+.item7 {
+  background-color: #b565a7;
+  color: #fff;
+}
+.item8 {
+  background-color: #009b77;
+  color: #fff;
+}
+.item9 {
+  background-color: #dd4124;
+  color: #fff;
+}
+.item10 {
+  background-color: #d65076;
+  color: #fff;
+}
+.item11 {
+  background-color: #45b8ac;
+  color: #fff;
+}
+.item12 {
+  background-color: #efc050;
+  color: #000;
+}
+.item13 {
+  background-color: #5b5ea6;
+  color: #fff;
+}
+.item14 {
+  background-color: #9b2335;
+  color: #fff;
+}
+.item15 {
+  background-color: #dfcfbe;
+  color: #000;
+}
+.item16 {
+  background-color: #bc243c;
+  color: #fff;
+}
+.item17 {
+  background-color: #c3447a;
+  color: #fff;
+}
+.item18 {
+  background-color: #98b4d4;
+  color: #000;
+}
+.item19 {
+  background-color: #6c4f3d;
+  color: #fff;
+}
+.item20 {
+  background-color: #c94c4c;
+  color: #fff;
+}
+.item21 {
+  background-color: #ffa07a;
+  color: #000;
+}
+.item22 {
+  background-color: #20b2aa;
+  color: #fff;
+}
+.item23 {
+  background-color: #778899;
+  color: #fff;
+}
+.item24 {
+  background-color: #b0c4de;
+  color: #000;
+}
+.item25 {
+  background-color: #ffd700;
+  color: #000;
+}
+.item26 {
+  background-color: #ff6347;
+  color: #fff;
+}
+.item27 {
+  background-color: #4682b4;
+  color: #fff;
+}
+.item28 {
+  background-color: #d2691e;
+  color: #fff;
+}
+.item29 {
+  background-color: #8a2be2;
+  color: #fff;
+}
+.item30 {
+  background-color: #a52a2a;
+  color: #fff;
+}
+.item31 {
+  background-color: #deb887;
+  color: #000;
+}
+.item32 {
+  background-color: #5f9ea0;
+  color: #fff;
+}
+.item33 {
+  background-color: #7fff00;
+  color: #000;
+}
+.item34 {
+  background-color: #d2691e;
+  color: #fff;
+}
+.item35 {
+  background-color: #ff7f50;
+  color: #000;
+}
+.item36 {
+  background-color: #6495ed;
+  color: #fff;
+}
+.item37 {
+  background-color: #fff8dc;
+  color: #000;
+}
+.item38 {
+  background-color: #dc143c;
+  color: #fff;
+}
+.item39 {
+  background-color: #00ffff;
+  color: #000;
+}
+.item40 {
+  background-color: #00008b;
+  color: #fff;
+}
+.item41 {
+  background-color: #008b8b;
+  color: #fff;
+}
+.item42 {
+  background-color: #b8860b;
+  color: #fff;
+}
+.item43 {
+  background-color: #a9a9a9;
+  color: #000;
+}
+.item44 {
+  background-color: #006400;
+  color: #fff;
+}
+.item45 {
+  background-color: #bdb76b;
+  color: #000;
+}
+.item46 {
+  background-color: #8b008b;
+  color: #fff;
+}
+.item47 {
+  background-color: #556b2f;
+  color: #fff;
+}
+.item48 {
+  background-color: #ff8c00;
+  color: #000;
+}
+.item49 {
+  background-color: #9932cc;
+  color: #fff;
+}
+.item50 {
+  background-color: #8b0000;
+  color: #fff;
+}
+
+body {
+  background: black;
+}
+html {
+  color-scheme: dark;
+}
+.controls {
+  text-align: center;
+  padding: 1rem;
+  button {
+    color: white;
+    background: none;
+    border: 1px solid white;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+  }
+}
