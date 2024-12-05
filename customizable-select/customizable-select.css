@@ -1,0 +1,86 @@
+select,
+::picker(select) {
+  appearance: base-select;
+}
+
+selectedoption {
+  font-size: 50px;
+  span {
+    display: none;
+  }
+}
+
+::picker(select) {
+  width: 500px;
+  padding: 0;
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* hide checkmark */
+option::before {
+  display: none;
+}
+
+option {
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  &:checked {
+    border-color: black;
+  }
+}
+
+button {
+  appearance: none;
+  background: none;
+  border: 1px solid white;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.emotion-groups {
+  padding: 1rem;
+}
+
+.emotion-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  h3 {
+    width: 100%;
+    margin: 0;
+  }
+}
+
+/* ::picker(select) {
+  max-height: 80dvh;
+  padding: 0.5rem;
+  top: 0;
+  position: absolute;
+} */
+
+/* selectedoption {
+  font-style: italic;
+  & figure {
+    background-image: linear-gradient(0deg, #fff 0%, #000 0% 20%, #fff 0% 40%, #000 0% 60%, #fff 0% 80%, #000 0% 100%);
+    height: 1rem;
+    margin: 0;
+  }
+} */
+
+body {
+  padding: 50px;
+  place-content: start;
+  min-height: 100dvh;
+  text-align: center;
+  overflow: hidden;
+  display: grid;
+  background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+  & > * {
+    margin-block: auto;
+  }
+}
+
+select[multiple] {
+  height: 300px;
+}
