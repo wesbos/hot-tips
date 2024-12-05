@@ -1,7 +1,7 @@
 {
   "name": "hot-tips",
   "version": "1.0.0",
-  "description": "",
+  "description": "\"Wes! Can I get the code from that Tip?\"",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -38,13 +38,28 @@
     }
   },
   "dependencies": {
-    "eslint-config-wesbos": "^3.2.0",
-    "fast-glob": "^3.2.12",
-    "prettier-plugin-multiline-arrays": "^1.1.2",
-    "vite": "^4.0.4",
+    "@codesandbox/nodebox": "^0.1.8",
+    "core-js": "^3.32.1",
+    "eslint-config-wesbos": "^3.2.3",
+    "fast-glob": "^3.3.1",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "vite": "^6.0.2",
     "vite-plugin-list-directory-contents": "^1.4.5"
   },
   "devDependencies": {
-    "@types/node": "^18.11.18"
-  }
+    "@types/node": "^20.5.7",
+    "postcss": "^8.4.28",
+    "postcss-nesting": "^12.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wesbos/hot-tips.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/wesbos/hot-tips/issues"
+  },
+  "homepage": "https://github.com/wesbos/hot-tips#readme",
+  "packageManager": "pnpm@9.10.0+sha1.216899f511c8dfde183c7cb50b69009c779534a8"
 }
