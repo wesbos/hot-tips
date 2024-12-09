@@ -5,7 +5,7 @@
 Bit of a mess right now, but this is my playground for testing things and recording tips.
 
 - <https://twitter.com/wesbos>
-- <https://tiktok.com/wesbos>
+- <https://tiktok.com/@wesbos>
 - <https://youtube.com/wesbos/shorts>
 - <https://instagram.com/wesbos/reels>
 - <https://linkedin.com/in/wesbos>
