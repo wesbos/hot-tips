@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Button that Doesn't Resize</title>
+  </head>
+  <body>
+    <button>
+      <span class="text">Save Item</span>
+      <span class="spinner">Saving Item<img src="./spinner.svg" /></span>
+    </button>
+
+    <style>
+      button {
+        display: grid;
+        grid-template-areas: "stack";
+        .spinner {
+          visibility: hidden;
+          grid-area: stack;
+        }
+        .text {
+          grid-area: stack;
+        }
+        &.loading {
+          .text {
+            visibility: hidden;
+          }
+          .spinner {
+            visibility: visible;
+          }
+        }
+      }
+      button {
+        background: black;
+        padding: 10px 20px;
+        border: 0;
+        color: white;
+        border-radius: 200px;
+        cursor: url("https://fav.farm/🖕") 15 0, auto;
+        font-family: "Geist mono", monospace;
+      }
+
+      img {
+        height: 1em;
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+
+      /* display: grid;
+        grid-template-areas: "stack";
+        & > * {
+          grid-area: stack;
+        } */
+    </style>
+
+    <script>
+      document.querySelector("button").addEventListener("click", (e) => {
+        e.currentTarget.classList.toggle("loading");
+      });
+    </script>
+  </body>
+</html>
