@@ -1,0 +1,17 @@
+{
+  "name": "group-by",
+  "version": "0.0.1",
+  "main": "group-by.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Wes Bos (https://wesbos.com/)",
+  "license": "MIT",
+  "description": "",
+  "type": "module",
+  "dependencies": {
+    "@observablehq/inspector": "^5.0.1",
+    "@observablehq/plot": "^0.6.16"
+  }
+}
