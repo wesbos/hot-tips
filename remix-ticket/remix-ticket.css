@@ -1,0 +1,187 @@
+body {
+  background: #000;
+  overflow: hidden;
+}
+.group {
+  z-index: 10;
+  /* width: 300px; */
+  user-select: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+}
+
+#debug {
+  position: relative;
+  z-index: 100;
+}
+body:has(#debug:checked) {
+  .ticket-container {
+    overflow: visible;
+  }
+  .holographic-overlay {
+    opacity: 1;
+    mix-blend-mode: normal;
+    & > * {
+      transition: all 0.5s ease-in-out;
+      border: 5px solid white;
+      --index: sibling-index();
+      --z: calc(var(--index) * 100px);
+      --deg: -55deg;
+      opacity: 1;
+      mix-blend-mode: normal !important;
+      scale: 1;
+    }
+  }
+}
+
+.ticket-container {
+  position: relative;
+  overflow: hidden;
+  #debug:checked & {
+    overflow: visible;
+  }
+  isolation: isolate;
+  z-index: 10;
+  width: 800px;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 200ms ease-out;
+  transform-style: preserve-3d;
+  perspective: 1500px;
+  transform: rotateY(calc((var(--mouse-x, 50) - 50) * 0.2deg)) rotateX(calc((50 - var(--mouse-y, 50)) * 0.2deg))
+    scale(1);
+}
+
+.holographic-overlay {
+  z-index: 10;
+  opacity: 0.5;
+  mix-blend-mode: color-dodge;
+  transition: opacity 300ms ease-in-out;
+  perspective: 1500px;
+  & > * {
+    height: 280px;
+    width: 100%;
+    position: absolute;
+    transform: translateY(var(--z)) rotate3d(1, 0, 0, var(--deg));
+  }
+}
+
+.bg-image {
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.2;
+  background-image: url(./ticket-holographic-DklhCYfT.avif);
+}
+
+.gradient-overlay {
+  /* position: absolute; */
+  /* top: 50%; */
+  /* transform: translate(-50%, -50%); */
+  scale: 1.5;
+  opacity: 0.2;
+  mix-blend-mode: hue;
+  background: linear-gradient(
+    135deg,
+    rgb(255, 119, 115) 2%,
+    rgb(255, 237, 95) 12.9661%,
+    rgb(168, 255, 95) 23.5922%,
+    rgb(131, 255, 247) 39.1029%,
+    rgb(119, 221, 223) 48.545%,
+    rgb(120, 148, 255) 59.1618%,
+    rgb(209, 124, 242) 62.9954%,
+    rgb(255, 119, 115) 76.7431%
+  );
+}
+
+.shine-overlay {
+  opacity: 0.5;
+  mix-blend-mode: plus-lighter;
+  background: linear-gradient(
+    315deg,
+    rgb(19, 20, 21) 0%,
+    rgb(143, 163, 163) 6.03181%,
+    rgb(162, 163, 163) 9.74451%,
+    rgb(20, 20, 20) 25.0721%,
+    rgb(143, 163, 163) 33.5357%,
+    rgb(164, 166, 166) 35.2988%,
+    rgb(37, 37, 38) 41.503%,
+    rgb(161, 161, 161) 52.393%,
+    rgb(124, 125, 125) 61.1346%,
+    rgb(19, 20, 21) 66.269%,
+    rgb(166, 166, 166) 74.4633%,
+    rgb(163, 163, 163) 79.8987%,
+    rgb(19, 20, 21) 85.7299%,
+    rgb(161, 161, 161) 89.8948%,
+    rgb(19, 20, 21) 100%
+  );
+}
+
+.glow-effect {
+  mix-blend-mode: overlay;
+  filter: blur(12px);
+  background: radial-gradient(
+    50% 50% at 50% 50%,
+    rgb(255, 255, 255) 0%,
+    rgba(255, 255, 255, 0.5) 43.6638%,
+    rgba(255, 255, 255, 0.11) 80.5409%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  --walk-amount: 500px;
+  --walk-x: calc((var(--mouse-x) - 50) * var(--walk-amount) / 100);
+  --walk-y: calc((var(--mouse-y) - 50) * var(--walk-amount) / 100);
+  transform: translate(var(--walk-x), var(--walk-y));
+}
+
+.ticket-image {
+  filter: contrast(1.05);
+  mix-blend-mode: overlay;
+  /* display: none; */
+}
+
+.ticket-image img {
+  position: relative;
+  width: 100%;
+}
+
+.ticket-details {
+  /* position: absolute; */
+  display: none;
+  bottom: 0;
+  left: 35%;
+  z-index: 40;
+  padding-bottom: 0.25rem;
+  padding-left: 0.5rem;
+  text-align: left;
+  font-family: "Conf Mono", monospace;
+  font-size: 8px;
+  color: white;
+}
+
+@media (min-width: 768px) {
+  .ticket-details {
+    padding-bottom: 1rem;
+    padding-left: 1.5rem;
+    font-size: 1rem;
+  }
+}
+
+.ticket-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  text-transform: uppercase;
+}
+
+@media (min-width: 768px) {
+  .ticket-info {
+    gap: 0.5rem;
+  }
+}
+
+.ticket-type {
+  color: #36d3ff;
+  text-transform: uppercase;
+}

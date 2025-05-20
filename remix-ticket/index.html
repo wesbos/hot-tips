@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="./remix-ticket.css" />
+  </head>
+  <body>
+    <input type="checkbox" id="debug" />
+    <div class="group" style="perspective: 1500px">
+      <div class="ticket-container">
+        <div class="holographic-overlay">
+          <div class="bg-image"></div>
+          <div class="gradient-overlay"></div>
+          <div class="shine-overlay"></div>
+          <div class="glow-effect"></div>
+        </div>
+        <div class="ticket-image">
+          <img src="./general-CFnhvhhh.avif" width="800" height="280" alt="Remix Jam 2025 Event Ticket" />
+        </div>
+        <div class="ticket-details">
+          <div class="ticket-info">
+            <p>october 10 2025</p>
+            <div>
+              <p>your name</p>
+              <p>your company</p>
+            </div>
+            <p class="ticket-type">Early Bird</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const container = document.querySelector(".ticket-container");
+
+      container.addEventListener("mousemove", (e) => {
+        const rect = container.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+        // Set CSS variables on the container
+        container.style.setProperty("--mouse-x", x);
+        container.style.setProperty("--mouse-y", y);
+
+        console.log(`X: ${x.toFixed(2)}%, Y: ${y.toFixed(2)}%`);
+      });
+    </script>
+  </body>
+</html>
