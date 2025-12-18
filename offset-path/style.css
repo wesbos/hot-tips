@@ -1,0 +1,287 @@
+/* Reset */
+/* 1. Use a more-intuitive box-sizing model */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* 2. Remove default margin */
+*:not(dialog) {
+  margin: 0;
+}
+
+/* 3. Enable keyword animations */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    interpolate-size: allow-keywords;
+  }
+}
+
+body {
+  /* 4. Add accessible line-height */
+  line-height: 1.5;
+  /* 5. Improve text rendering */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 6. Improve media defaults */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* 7. Inherit fonts for form controls */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+/* 8. Avoid text overflows */
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+/* 9. Improve line wrapping */
+p {
+  text-wrap: pretty;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  text-wrap: balance;
+}
+
+/*
+  10. Create a root stacking context
+*/
+#root,
+#__next {
+  isolation: isolate;
+}
+
+body {
+  background: black;
+  color-scheme: dark;
+  text-align: center;
+  position: relative;
+}
+
+/* Fixed sine wave on screen */
+#sine-wave-svg {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 2;
+  display: none;
+}
+
+/* Register scroll-progress as an animatable property */
+@property --scroll-progress {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+/* Scrollable area to drive the animation */
+.scroll-area {
+  height: 500vh; /* How much to scroll */
+}
+
+.cards {
+  --frequency: 2;
+  --amplitude: 100; /* Set by JS */
+  --height: 100; /* Height as percentage of viewport */
+  --card-spread: 1; /* How spread out the cards are (0-1) */
+  /* Scale rotation based on amplitude: 0 amplitude = 0 rotation, higher amplitude = more rotation */
+  --max-rotation: calc(var(--amplitude) * 0.3deg);
+  --max-skew-y: calc(var(--amplitude) * 0.05deg);
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  perspective: 1000px;
+  /* Scroll-driven animation tied to page scroll */
+  animation: scroll-progress linear;
+  animation-timeline: scroll(root);
+}
+
+.card {
+  /* Base position: cards spread out based on sibling index */
+  --base-position: calc(sibling-index() / sibling-count() * var(--card-spread));
+  /* Actual position combines base + scroll progress */
+  --position: calc(var(--base-position) + var(--scroll-progress));
+  /* Sine wave x position: negated to match inverted Y direction */
+  --x: calc(-1 * var(--amplitude) * sin(var(--position) * var(--frequency) * 1turn));
+  /* Vertical position - INVERTED so cards come from bottom and go up */
+  --y: calc((1 - var(--position)) * var(--height));
+  /* Rotation based on sine wave position: right = negative, left = positive */
+  --rotation: calc(-1 * var(--max-rotation) * sin(var(--position) * var(--frequency) * 1turn));
+  /* 3D skew: cards on right tilt towards viewer, cards on left tilt away */
+  --skew-y: calc(var(--max-skew-y) * sin(var(--position) * var(--frequency) * 0.4turn));
+  /* Scale: 0 at bottom (y=100), 1.5 at top (y=0) */
+  --scale: calc(1.5 - var(--y) * 0.015);
+
+  position: absolute;
+  width: 200px;
+  height: 100px;
+  /* Position using calculated sine wave coordinates */
+  left: calc(50% + var(--x) * 1px);
+  top: calc(var(--y) * 1vh);
+  /* Center the card on its position */
+  translate: -50% -50%;
+  scale: var(--scale);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  rotate: var(--rotation);
+  transform: rotateY(var(--skew-y));
+  transform-origin: center;
+  transform-style: preserve-3d;
+}
+
+@keyframes scroll-progress {
+  from {
+    /* Start: should be -(card-spread + 0.3) to keep all cards off-screen below */
+    --scroll-progress: -2.3;
+  }
+  to {
+    --scroll-progress: 1.3; /* End above viewport */
+  }
+}
+
+.controls {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  border-radius: 12px;
+  z-index: 1000;
+  font-family: system-ui, sans-serif;
+}
+
+.controls label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: white;
+  font-size: 14px;
+}
+
+.controls input[type="range"] {
+  width: 150px;
+  accent-color: #ffc600;
+}
+
+.controls output {
+  min-width: 40px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes scaleup {
+  from {
+    scale: 0.5;
+  }
+  to {
+    scale: 1.5;
+  }
+}
+
+/* Album styles */
+.card {
+  padding: 10px;
+  font-family: system-ui, sans-serif;
+  color: white;
+  display: grid;
+  grid-template-columns: 50px 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 0 10px;
+  height: auto;
+  align-items: center;
+  border-radius: 10px;
+  padding: 5px;
+  background: black;
+  background: var(--grad), url(https://i.scdn.co/image/ab67616d0000b273b55ed152b6f88ea4c375ab16);
+  background-size: cover, 50%;
+  img {
+    border-radius: 5px;
+    height: 100%;
+    width: auto;
+    aspect-ratio: 1/1;
+    object-fit: contain;
+    grid-row: 1 / -1;
+  }
+  p {
+    text-align: left;
+    margin: 0;
+    font-size: 10px;
+  }
+  .arist {
+    align-self: end;
+    font-weight: bold;
+  }
+  .song {
+    align-self: start;
+  }
+  &:nth-child(8n + 1) {
+    --grad: var(--grad1);
+  }
+  &:nth-child(8n + 2) {
+    --grad: var(--grad2);
+  }
+  &:nth-child(8n + 3) {
+    --grad: var(--grad3);
+  }
+  &:nth-child(8n + 4) {
+    --grad: var(--grad4);
+  }
+  &:nth-child(8n + 5) {
+    --grad: var(--grad5);
+  }
+  &:nth-child(8n + 6) {
+    --grad: var(--grad6);
+  }
+  &:nth-child(8n + 7) {
+    --grad: var(--grad7);
+  }
+  &:nth-child(8n + 8) {
+    --grad: var(--grad8);
+  }
+}
+
+:root {
+  --grad1: linear-gradient(135deg, #e2b0ffaf 10%, #9f44d3 100%);
+  --grad2: linear-gradient(135deg, #79f1a4aa 10%, #0e5cadaa 100%);
+  --grad3: linear-gradient(135deg, #fdd819aa 10%, #e80505aa 100%);
+  --grad4: linear-gradient(135deg, #ff7af5aa 10%, #513162aa 100%);
+  --grad5: linear-gradient(135deg, #ffe985aa 10%, #fa742b 100%);
+  --grad6: linear-gradient(135deg, #69ff97aa 10%, #00e4ff 100%);
+  --grad7: linear-gradient(135deg, #3b2667aa 10%, #bc78ec 100%);
+  --grad8: linear-gradient(135deg, #ff96f9aa 10%, #c32bac 100%);
+}
+
+html {
+  /* Scrollbar colors */
+  scrollbar-color: #ffc600 #000000;
+  scrollbar-width: thin;
+}
