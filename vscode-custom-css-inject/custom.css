@@ -29,7 +29,9 @@
 }
 
 /* Multi-line tabs */
-
+.mac {
+  --editor-group-tab-height: auto;
+}
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab {
   --editor-group-tab-height: 1.2;
   padding: 8px;
@@ -55,6 +57,28 @@
     line-height: 1;
     & .label-description {
       margin: 0;
+    }
+  }
+}
+
+/* Split Containers */
+x#workbench\.parts\.editor {
+  & .split-view-view.visible {
+    background: url("https://wes.io/qGuBwRzZ/content.png");
+    background-size: 500%;
+    background-attachment: fixed;
+    background-image: linear-gradient(69deg, #ffc600 70%, #ff68b8, #ff68b8 100%);
+    background-size: cover;
+    --separator-border: rgba(255, 255, 255, 0); /* Resize Border color */
+    /* The very most top level  editors need extra margin on all sides*/
+    & .editor-group-container {
+      --spacing: 20px;
+      border: 1.5px solid black;
+      box-shadow: 0 0 3px 4px rgba(0, 0, 0, 0.15);
+      border-radius: 10px;
+      margin: var(--spacing);
+      height: calc(100% - calc(var(--spacing) * 2));
+      overflow: hidden;
     }
   }
 }

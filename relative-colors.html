@@ -4,10 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.css" />
+    <script src="https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.js"></script>
   </head>
   <body>
     <div class="sample associative">
-      <p>CSS <span class="friend">RELATIVE</span> COLORS</p>
       <div class="swatches">
         <p style="--g1: var(--ass1); --g2: var(--ass2)" class="sub">colors</p>
         <span class="swatch" style="--swatch: var(--ass1)">Associative</span>
@@ -60,6 +61,12 @@
         <span class="swatch dark" style="--swatch: var(--lighter17)">×</span>
         <span class="swatch dark" style="--swatch: var(--lighter18)">×</span>
       </div>
+      <input
+        type="text"
+        value="#b1a2ee"
+        data-coloris
+        oninput="(() => document.documentElement.style.setProperty('--color', this.value))()"
+      />
     </div>
 
     <style>
@@ -127,6 +134,10 @@
       .sample {
         --background: var(--color);
         background: var(--background);
+        display: grid;
+        grid-template-columns: 1fr auto;
+        place-items: start center;
+        margin: 50px;
         /* Not yet 100% working with this  */
         color: var(--lighter);
         padding: 0px;

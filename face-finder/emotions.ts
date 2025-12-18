@@ -35,7 +35,7 @@ app.get('/', async (c) => {
   console.time('classify');
   console.timeLog('classify', 'Loading list of images to classify');
   // 1. List all the images from the ss folder
-  const imagePaths = (await readdir('./ss')).filter((file) => file.endsWith('.jpg')).map((file) => `./ss/${file}`);
+  const imagePaths = (await readdir('./ss/wests')).filter((file) => file.endsWith('.jpg')).map((file) => `./ss/wests/${file}`);
   // 2. Read all the images
   console.timeLog('classify', 'Loading list of images to classify');
   const images = await Promise.all(imagePaths.map((path) => RawImage.read(path)));
@@ -58,6 +58,19 @@ app.get('/', async (c) => {
           <p>${emojiForEmotion(result.label)} ${result.label} — ${Math.round(result.score * 100)}%</p>
       </div>`
         )
+        .join('')}
+    </div>
+    <style>${css}</style>
+  `);
+});
+
+app.get('/preview', async (c) => {
+  // 1. List all the images from the ss folder
+  const imagePaths = (await readdir('./ss/wests')).filter((file) => file.endsWith('.jpg')).map((file) => `./ss/wests/${file}`);
+  return c.html(/* html */ `
+    <div class="results">
+      ${imagePaths
+        .map((image) => `<div class="result"><img src="${image}" title="${image}" /></div>`)
         .join('')}
     </div>
     <style>${css}</style>

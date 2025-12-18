@@ -35,7 +35,18 @@
       <a href="https://google.com"><span>google</span><span>.</span>com</a>
     </div>
 
+    <div class="parent">
+      Parent
+      <div class="child">Child</div>
+    </div>
+
     <style>
+      .child {
+        .parent & {
+          /* .parent */
+          background: palegoldenrod;
+        }
+      }
       .container {
         border: 1px solid red;
         container: article / inline-size;

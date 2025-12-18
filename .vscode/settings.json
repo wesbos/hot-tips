@@ -2,7 +2,9 @@
   "workbench.colorCustomizations": {
     "editorGutter.background": "#00000000" // no gutter color
   },
+  "scm.diffDecorations": "none",
   "editor.renderLineHighlight": "all",
+  "editor.suggest.showStatusBar": false,
   "editor.lineNumbers": "off",
   "editor.folding": false,
   "editor.guides.indentation": false,
@@ -15,5 +17,10 @@
   // bumping mouse scroll goofs with eidting, so we "turn off" scrolling with this feature
   "editor.scrollBeyondLastLine": true,
   "editor.scrollbar.verticalScrollbarSize": 0,
-  "workbench.activityBar.visible": false
+  "editor.codeActionsOnSave": {
+
+  },
+  "editor.inlayHints.enabled": "offUnlessPressed",
+  "javascript.inlayHints.variableTypes.enabled": false,
+  "typescript.inlayHints.variableTypes.enabled": true
 }

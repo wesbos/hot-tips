@@ -8,6 +8,9 @@
   </head>
   <body>
     <div id="app"></div>
+
+    <!--
+    I commented this out because Vite wasn't loving importmaps and was whining about it every time I started the server for hot tips
     <script type="importmap">
       {
         "imports": {
@@ -24,6 +27,6 @@
       import { createRoot } from "react-dom";
       import { formatMoney } from "utils";
       createRoot(document.querySelector(`#app`)).render(formatMoney(100.23));
-    </script>
+    </script> -->
   </body>
 </html>

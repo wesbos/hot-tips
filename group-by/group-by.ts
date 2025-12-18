@@ -16,12 +16,33 @@ const orders = [
   { countryCode: `MX`, name: `Juan`, product: `skateboard` },
 ];
 
+const countryCodes = [`US`, `CA`, `MX`, `FR`, `JP`];
+const products = [`stickers`, `shirt`, `skateboard`, `hoodie`, `basketball`];
+
+for (let i = 0; i < 1000; i++) {
+  orders.push({
+    countryCode: countryCodes[Math.floor(Math.random() * countryCodes.length)],
+    name: `Name${i}`, // You can replace this with any name generation logic
+    product: products[Math.floor(Math.random() * products.length)],
+  });
+}
+
 /* Object.groupBy */
 const ordersByCountry = Object.groupBy(orders, (order) => order.countryCode);
 // console.log(ordersByCountry);
 
 // Works for maps too - could be useful for grouping by multiple keys
 const ordersByCountryMap = Map.groupBy(orders, (order) => order.countryCode);
+
+// with a for loop
+const ordersByCountryForLoop = {};
+for (const order of orders) {
+  const { countryCode } = order;
+  if (!ordersByCountryForLoop[countryCode]) {
+    ordersByCountryForLoop[countryCode] = [];
+  }
+  ordersByCountryForLoop[countryCode].push(order);
+}
 
 // VS using a reduce
 const ordersByCountry2 = orders.reduce((acc, order) => {

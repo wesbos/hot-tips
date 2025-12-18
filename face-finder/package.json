@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "generate": "tsx smiling.ts",
+    "classify": "tsx emotions.ts"
   },
   "keywords": [],
   "author": "Wes Bos (https://wesbos.com/)",

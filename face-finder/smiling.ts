@@ -31,6 +31,7 @@
 
 import Ffmpeg from 'fluent-ffmpeg';
 import pMap from 'p-map';
+import { mkdir } from 'fs/promises';
 // 1. get the length of the video
 
 async function getDuration(file: string): Promise<number> {
@@ -45,10 +46,10 @@ async function getDuration(file: string): Promise<number> {
   });
 }
 
-const FILENAME = '674.mp4';
-
+const FILENAME = 'wests.mp4';
+const FILENAME_NO_EXT = FILENAME.split('.')[0];
 const duration = await getDuration(FILENAME);
-const SCREENSHOT_COUNT = 500;
+const SCREENSHOT_COUNT = 2500;
 const SCREENSHOT_INTERVAL = Math.floor(duration / SCREENSHOT_COUNT);
 // console.log({ SCREENSHOT_INTERVAL });
 const timestamps = Array.from({ length: SCREENSHOT_COUNT }).map((_, i) => i * SCREENSHOT_INTERVAL);
@@ -60,7 +61,7 @@ async function takeScreenshot({ file, timestamp }: { file: string; timestamp: nu
       .input(FILENAME)
       .setStartTime(timestamp)
       .frames(1)
-      .outputOptions('-vf', 'scale=350:-1')
+      // .outputOptions('-vf', 'scale=350:-1')
       .outputOptions('-q:v', '2')
       .output(file)
       .on('end', resolve)
@@ -68,14 +69,15 @@ async function takeScreenshot({ file, timestamp }: { file: string; timestamp: nu
       .run();
   });
 }
-
+// make the directory if it doesn't exist
+await mkdir(`ss/${FILENAME_NO_EXT}`, { recursive: true });
 console.time('6 at once');
 const results = await pMap(
   timestamps,
   async (timestamp) => {
     console.log(`Taking screenshot at ${timestamp}`);
     return takeScreenshot({
-      file: `ss/output-${timestamp}.jpg`,
+      file: `ss/${FILENAME_NO_EXT}/${timestamp}.jpg`,
       timestamp,
     });
   },

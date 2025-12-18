@@ -2,6 +2,7 @@ import { PathMe } from './path';
 
 const stats = document.querySelector<HTMLPreElement>('.stats');
 const clear = document.querySelector<HTMLButtonElement>('.clear');
+const start = document.querySelector<HTMLButtonElement>('.start');
 const video = document.querySelector<HTMLVideoElement>('video');
 const svg = document.querySelector<SVGElement>('svg');
 const path = document.querySelector<SVGElement>('svg path');
@@ -26,8 +27,13 @@ function getScreenId() {
     .filter((key) => key.startsWith('screen-'))
     .map((key) => parseInt(key.replace('screen-', '')))
     .sort((a, b) => a - b);
+  if (existingScreens.length === 1) {
+    // xray
+    // video?.classList.add('xray');
+  }
   return existingScreens.at(-1) + 1 || 1;
 }
+
 const screenId = `screen-${getScreenId()}`;
 
 function setScreenDetails() {
@@ -123,6 +129,29 @@ function populateWebcam() {
     video.play();
   });
 }
+
+function makeBabies() {
+  const babies = [];
+  Array(20)
+    .fill(0)
+    .forEach((_, i) => {
+      console.log('making babies', i);
+      const width = Math.random() * (window.screen.availWidth / 2);
+      const height = Math.random() * (window.screen.availHeight / 2);
+      const x = Math.random() * (window.screen.availWidth - width);
+      const y = Math.random() * (window.screen.availHeight - height);
+      const baby = window.open(window.location.href, `babby${i}`, `width=${width},height=${height},left=${x},top=${y}`);
+      console.log(baby);
+      babies.push(baby);
+      setInterval(() => {
+        baby?.moveTo(Math.random() * window.screen.availWidth, Math.random() * window.screen.availHeight);
+      }, 1000);
+    });
+  // after 10 seconds, close all the babies
+  setTimeout(() => babies.forEach((baby) => baby?.close()), 10000);
+}
+
+// video?.addEventListener('click', makeBabies);
 
 go();
 

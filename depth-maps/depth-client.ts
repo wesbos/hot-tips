@@ -1,4 +1,4 @@
-import { DepthEstimationPipeline, DepthEstimationPipelineOutput, RawImage, pipeline, env } from '@xenova/transformers';
+import { DepthEstimationPipeline, DepthEstimationPipelineOutput, RawImage, pipeline, env } from '@huggingface/transformers';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import {
   AdditiveBlending,
@@ -65,7 +65,12 @@ populateCamera();
 
 console.log('Loading model...');
 // Transformers.js
-const depthEstimator = await pipeline('depth-estimation', 'Xenova/depth-anything-small-hf');
+const depthEstimator = await pipeline('depth-estimation', 'Xenova/depth-anything-large-hf', {
+  device: 'webgpu',
+  progress_callback: (step, message) => {
+    console.log(step.status, step.name, step.progress);
+  }
+});
 
 console.log('Loaded model');
 
@@ -84,7 +89,6 @@ fileUpload?.addEventListener('input', (event) => {
 let onSliderChange: typeof HTMLInputElement.prototype.onchange;
 
 
-console.debug(`[vite] connecting`);
 async function predict(imageURL: string) {
   document.body.classList.add('loading');
   if (!imageContainer || !depthEl) return;

@@ -5,7 +5,9 @@ const decoder = new TextDecoder();
 //   .then(res => res.json())
 //   .then(data => console.log(data));
 
-fetch(`http://localhost:6969/`)
+// AbortController
+const controller = new AbortController();
+fetch(`http://localhost:8000/`, { signal: controller.signal })
   .then(async (res) => {
     const reader = res.body.getReader();
     let chunks = [];

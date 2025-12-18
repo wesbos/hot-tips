@@ -96,6 +96,11 @@
         padding: var(--spacing);
       }
 
+      nav > *,
+      nav .actions > * {
+        background: red;
+      }
+
       .actions {
         display: contents;
       }
@@ -123,12 +128,10 @@
         place-content: center;
       }
 
+      /* Doesn't matter */
       input {
         background: none;
-        /* flex-grow: 1; */
       }
-
-      /* Doesn't matter */
       nav {
         font-size: 0;
         border: 1px solid #454545;

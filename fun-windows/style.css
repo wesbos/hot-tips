@@ -1,13 +1,80 @@
+html {
+}
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333;
+}
+
 svg,
 video {
   position: absolute;
-  pointer-events: none;
 }
 
 svg {
+  pointer-events: none;
   z-index: 2;
+  display: none;
+}
+
+button {
+  display: none;
+}
+pre {
+  display: none;
 }
 
 body {
   overflow: hidden;
+}
+
+video.xray {
+  filter: invert(1) grayscale(0.4) contrast(2.2);
+  mix-blend-mode: multiply;
+}
+
+.tel {
+  font-size: 50px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.2);
+  max-width: 800px;
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 20px;
+  border: 1px solid white;
+  & > * {
+    display: block;
+    margin: 0 auto;
+    font-size: 50px;
+  }
+  button {
+    font-size: 10px;
+  }
+}
+
+.hidden {
+  display: none;
+}
+
+input {
+  text-align: center;
+}
+
+.controls {
+  text-align: center;
+  color: white;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+body {
+  /* background: url("./bg.png"); */
+  background: linear-gradient(90deg, rgba(131, 58, 180, 1) 0%, rgba(253, 29, 29, 1) 50%, rgba(252, 176, 69, 1) 100%);
+
+  /* background-size: cover;
+  background-size: var(--width) var(--height);
+  background-position: var(--x) var(--y); */
 }

@@ -3,19 +3,55 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Frame Viewer</title>
+    <title>Media Recorder Test</title>
     <script type="module" src="./scripts.ts"></script>
     <link rel="stylesheet" href="./style.css" />
-    <link rel="icon" href="https://fav.farm/🔥" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234a5568'%3E%3Cpath d='M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4zM14 13h-3v3H9v-3H6v-2h3V8h2v3h3v2z'/%3E%3C/svg%3E"
+    />
   </head>
   <body>
-    <video muted controls class="webcam"></video>
-    <video controls class="review"></video>
-    <button id="start">👩🏻‍🎤 Give Access</button>
-    <button id="record">🔴 Record</button>
-    <button id="stop">🛑 STOP</button>
-    <select name="webcams" id="webcams"></select>
-    <select name="microphones" id="microphones"></select>
-    <div class="output"></div>
+    <div class="container">
+      <h1>Media Recorder Test</h1>
+
+      <div class="instructions">
+        <ul>
+          <li>Give access to camera and microphone</li>
+          <li>Select camera and microphone</li>
+          <li>Record for at least 2-4 minutes. Longer is better.</li>
+          <li>Visit about://histograms/#Media.MediaRecorder.DroppingFrameTooManyInEncode</li>
+          <li>Show me the result</li>
+        </ul>
+      </div>
+
+      <div class="video-container">
+        <video muted controls class="webcam" title="Live Camera Feed"></video>
+        <div class="video-info">
+          <div class="resolution-display" id="resolution">Resolution: Not available</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="status" id="status">Ready to start</div>
+
+        <div class="buttons">
+          <button id="start" aria-label="Request camera access">Give Access</button>
+          <button id="record" aria-label="Start recording">Record</button>
+          <button id="stop" aria-label="Stop recording">Stop</button>
+        </div>
+
+        <div class="device-selectors">
+          <select name="webcams" id="webcams" aria-label="Select camera">
+            <option value="">Select Camera</option>
+          </select>
+          <select name="microphones" id="microphones" aria-label="Select microphone">
+            <option value="">Select Microphone</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="output" aria-label="Downloaded recordings"></div>
+    </div>
   </body>
 </html>

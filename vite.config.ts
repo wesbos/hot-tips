@@ -2,6 +2,8 @@ import { defineConfig } from 'vite';
 import { directoryPlugin } from 'vite-plugin-list-directory-contents';
 /* eslint-disable */
 // import { directoryPlugin } from '../../../Sites/vite-plugin-list-directory-contents/plugin';
+import devtoolsJson from 'vite-plugin-devtools-json';
+
 import { exec } from 'node:child_process';
 
 import fg from 'fast-glob';
@@ -9,9 +11,11 @@ import { stat } from 'node:fs/promises';
 
 async function run(cmd: string, waitForText?: string) {
   return new Promise<void>((resolve) => {
+    console.log('Running command', cmd);
     const process = exec(cmd);
     process.stdout
       ?.on('data', (data: string) => {
+        console.log(`stdout: ${data}`);
         if (waitForText && data.includes(waitForText)) {
           resolve();
         }
@@ -32,13 +36,14 @@ async function getLastModifiedFile(fileGlob: string) {
   return filesWithStats.at(0);
 }
 
-process.env.BROWSER = 'Firefox Developer Edition';
+process.env.BROWSER = 'Microsoft Edge';
 
 export default defineConfig(async () => {
-
   const [lastFile] = await Promise.all([
     getLastModifiedFile('**/*.html'),
-    run('caddy stop').then(() => run('caddy start', 'Caddy is running')),
+    run('caddy stop').then(() => run('caddy start', 'Caddy is running')).catch((err) => {
+      console.log('Error starting Caddy', err);
+    }),
   ]);
 
   return {
@@ -48,6 +53,7 @@ export default defineConfig(async () => {
       open: `https://tips.localhost/${lastFile?.file}`,
     },
     plugins: [
+      devtoolsJson(),
       directoryPlugin({
         baseDir: __dirname,
       }),

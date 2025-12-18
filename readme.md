@@ -10,8 +10,17 @@ Bit of a mess right now, but this is my playground for testing things and record
 - <https://instagram.com/wesbos/reels>
 - <https://linkedin.com/in/wesbos>
 
-## You may be interested in:
+## You may be interested in
 
 1. The vite config for live reloading
 2. The Caddyfile for a local https server
 3. The .vscode settings for a clean UI
+
+```ts
+const age: string = 100;
+```
+
+```js
+const wes = "  asdfasdf
+console.log(nope);
+```
