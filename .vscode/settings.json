@@ -15,12 +15,13 @@
   "editor.minimap.enabled": false,
   "editor.padding.top": 10,
   // bumping mouse scroll goofs with eidting, so we "turn off" scrolling with this feature
-  "editor.scrollBeyondLastLine": true,
+  "editor.scrollBeyondLastLine": false,
   "editor.scrollbar.verticalScrollbarSize": 0,
-  "editor.codeActionsOnSave": {
-
-  },
+  "editor.codeActionsOnSave": {},
   "editor.inlayHints.enabled": "offUnlessPressed",
   "javascript.inlayHints.variableTypes.enabled": false,
-  "typescript.inlayHints.variableTypes.enabled": true
+  "typescript.inlayHints.variableTypes.enabled": true,
+  "editor.fontSize": 28,
+  "window.zoomLevel": -2,
+  "editor.stickyScroll.enabled": false
 }
