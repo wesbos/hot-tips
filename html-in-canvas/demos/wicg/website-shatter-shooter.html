@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>Duck Hunt Todo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: #000;
+    font-family: "Press Start 2P", monospace;
+  }
+
+  canvas {
+    width: min(1000px, 94vw);
+    aspect-ratio: 16 / 10;
+    border-radius: 0;
+    border: 4px solid #fcfcfc;
+    box-shadow: 0 0 0 4px #000, 0 0 80px rgba(104, 136, 252, 0.25);
+    overflow: clip;
+    cursor: none;
+    image-rendering: pixelated;
+  }
+
+  #draw_element {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-rows: auto auto auto 1fr;
+    gap: 8px;
+    padding: clamp(12px, 2vw, 20px);
+    background: linear-gradient(180deg, #6888fc 0%, #3850b0 100%);
+    color: #fcfcfc;
+  }
+
+  .topbar {
+    display: none;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 20px;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+    color: #fcc41c;
+    text-shadow: 3px 3px 0 #000;
+    text-transform: uppercase;
+  }
+
+  p {
+    margin: 0;
+    max-width: 64ch;
+    font-size: 20px;
+    line-height: 1.7;
+    color: #fcfcfc;
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  .toolbar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .new-todo {
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 0;
+    border: 3px solid #fcfcfc;
+    background: #000;
+    color: #fcfcfc;
+    padding: 6px 8px;
+    font: inherit;
+    font-size: 20px;
+  }
+
+  .add-btn {
+    border: 3px solid #fcfcfc;
+    background: #e40028;
+    color: #fcfcfc;
+    border-radius: 0;
+    padding: 6px 10px;
+    font: inherit;
+    font-size: 20px;
+    text-transform: uppercase;
+  }
+
+  .todos {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 6px;
+  }
+
+  .todo {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    align-items: center;
+    border: 2px solid #fcfcfc;
+    border-radius: 0;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.78);
+  }
+
+  .todo input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: #00a800;
+  }
+
+  .todo .title {
+    font-weight: normal;
+    font-size: 20px;
+  }
+
+  .todo .meta {
+    font-size: 20px;
+    color: #00a800;
+  }
+
+  .todo.done .title {
+    text-decoration: line-through;
+    color: #747474;
+  }
+
+  .todo button {
+    border: 2px solid #fcfcfc;
+    background: #005800;
+    color: #fcfcfc;
+    border-radius: 0;
+    padding: 4px 8px;
+    font: inherit;
+    font-size: 20px;
+    text-transform: uppercase;
+  }
+
+  .todo .edit-input {
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 0;
+    border: 2px solid #fcc41c;
+    background: #000;
+    color: #fcfcfc;
+    padding: 4px 6px;
+    font: inherit;
+  }
+
+  .hint {
+    margin-top: 10px;
+    color: #6888fc;
+    font-size: 10px;
+    font-family: "Press Start 2P", monospace;
+    text-transform: uppercase;
+    text-align: center;
+  }
+</style>
+
+<canvas id="canvas" layoutsubtree>
+  <div id="draw_element">
+    <div class="topbar">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+
+    <div>
+      <h1>Duck Hunt Todo</h1>
+      <p>Right-click to shoot!</p>
+    </div>
+
+    <div class="toolbar">
+      <input class="new-todo" type="text" placeholder="Add a task..." />
+      <button class="add-btn" type="button">Add</button>
+    </div>
+
+    <ul class="todos">
+      <li class="todo done">
+        <input type="checkbox" checked />
+        <div>
+          <div class="title">Shoot the ducks</div>
+          <div class="meta">Round clear!</div>
+        </div>
+        <button type="button">Edit</button>
+      </li>
+      <li class="todo">
+        <input type="checkbox" />
+        <div>
+          <div class="title">Avoid the dog laugh</div>
+          <div class="meta">In progress</div>
+        </div>
+        <button type="button">Edit</button>
+      </li>
+      <li class="todo">
+        <input type="checkbox" />
+        <div>
+          <div class="title">Beat Round 10</div>
+          <div class="meta">3 shots left</div>
+        </div>
+        <button type="button">Edit</button>
+      </li>
+      <li class="todo">
+        <input type="checkbox" />
+        <div>
+          <div class="title">Get perfect score</div>
+          <div class="meta">999,900 pts</div>
+        </div>
+        <button type="button">Edit</button>
+      </li>
+    </ul>
+  </div>
+</canvas>
+<p class="hint">Right-click to shoot</p>
+
+<script>
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  const sourceLayer = document.createElement("canvas");
+  const sourceCtx = sourceLayer.getContext("2d");
+
+  const holes = [];
+  const shards = [];
+  const sparks = [];
+  const maxHoles = 80;
+  const maxShards = 400;
+  const gravity = 1700;
+  const floorPadding = 58;
+
+  let pointerX = 0;
+  let pointerY = 0;
+  let hasPointer = false;
+  let lastTime = performance.now();
+
+  const drawElement = canvas.firstElementChild;
+  if (drawElement instanceof HTMLElement) {
+    const todoList = drawElement.querySelector(".todos");
+    const newTodoInput = drawElement.querySelector(".new-todo");
+    const addButton = drawElement.querySelector(".add-btn");
+
+    const finishInlineEdit = (row, commit) => {
+      const titleEl = row.querySelector(".title");
+      const inputEl = row.querySelector(".edit-input");
+      if (!(titleEl instanceof HTMLElement) || !(inputEl instanceof HTMLInputElement)) return;
+      if (commit) titleEl.textContent = inputEl.value.trim() || "Untitled task";
+      else titleEl.textContent = row.dataset.originalTitle ?? titleEl.textContent;
+      inputEl.remove();
+      titleEl.hidden = false;
+      row.dataset.editing = "false";
+      const btn = row.querySelector("button");
+      if (btn instanceof HTMLButtonElement) btn.textContent = "Edit";
+      canvas.requestPaint();
+    };
+
+    const startInlineEdit = (row) => {
+      if (row.dataset.editing === "true") return;
+      const titleEl = row.querySelector(".title");
+      if (!(titleEl instanceof HTMLElement)) return;
+      row.dataset.originalTitle = titleEl.textContent ?? "";
+      row.dataset.editing = "true";
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "edit-input";
+      input.value = titleEl.textContent ?? "";
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          finishInlineEdit(row, true);
+        } else if (event.key === "Escape") {
+          event.preventDefault();
+          finishInlineEdit(row, false);
+        }
+      });
+      input.addEventListener("blur", () => finishInlineEdit(row, true));
+      titleEl.hidden = true;
+      titleEl.after(input);
+      const btn = row.querySelector("button");
+      if (btn instanceof HTMLButtonElement) btn.textContent = "Save";
+      input.focus();
+      input.select();
+      canvas.requestPaint();
+    };
+
+    drawElement.addEventListener("change", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement) || target.type !== "checkbox") return;
+      const row = target.closest(".todo");
+      if (!row) return;
+      row.classList.toggle("done", target.checked);
+      canvas.requestPaint();
+    });
+
+    drawElement.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const row = target.closest(".todo");
+
+      if (target.closest(".add-btn")) {
+        if (!(todoList instanceof HTMLElement) || !(newTodoInput instanceof HTMLInputElement)) return;
+        const value = newTodoInput.value.trim();
+        if (!value) return;
+        const item = document.createElement("li");
+        item.className = "todo";
+        item.innerHTML = `
+          <input type="checkbox" />
+          <div>
+            <div class="title"></div>
+            <div class="meta">New</div>
+          </div>
+          <button type="button">Edit</button>
+        `;
+        const titleNode = item.querySelector(".title");
+        if (titleNode) titleNode.textContent = value;
+        todoList.appendChild(item);
+        newTodoInput.value = "";
+        canvas.requestPaint();
+        return;
+      }
+
+      if (row && target.tagName === "BUTTON") {
+        if (row.dataset.editing === "true") finishInlineEdit(row, true);
+        else startInlineEdit(row);
+      }
+    });
+
+    if (newTodoInput instanceof HTMLInputElement) {
+      newTodoInput.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        if (addButton instanceof HTMLButtonElement) addButton.click();
+      });
+    }
+  }
+
+  function rand(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+  function toCanvasPoint(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (clientX - rect.left) * devicePixelRatio,
+      y: (clientY - rect.top) * devicePixelRatio,
+    };
+  }
+
+  function setBackingSize(width, height) {
+    canvas.width = width;
+    canvas.height = height;
+    sourceLayer.width = width;
+    sourceLayer.height = height;
+    pointerX = width * 0.5;
+    pointerY = height * 0.5;
+    canvas.requestPaint();
+  }
+
+  function shoot(clientX, clientY) {
+    const p = toCanvasPoint(clientX, clientY);
+    const radius = rand(22, 38) * devicePixelRatio;
+    holes.push({ x: p.x, y: p.y, r: radius });
+    if (holes.length > maxHoles) holes.shift();
+
+    const shardCount = 7;
+    for (let i = 0; i < shardCount; i++) {
+      const ang = rand(0, Math.PI * 2);
+      const dist = Math.sqrt(Math.random()) * radius;
+      const cx = p.x + Math.cos(ang) * dist;
+      const cy = p.y + Math.sin(ang) * dist;
+      const w = rand(26, 56) * devicePixelRatio;
+      const h = rand(26, 56) * devicePixelRatio;
+      const sx = Math.max(0, Math.min(sourceLayer.width - w, cx - w * 0.5));
+      const sy = Math.max(0, Math.min(sourceLayer.height - h, cy - h * 0.5));
+      const dirX = cx - p.x;
+      const dirY = cy - p.y;
+      const len = Math.hypot(dirX, dirY) || 1;
+      const nX = dirX / len;
+      const nY = dirY / len;
+
+      shards.push({
+        sx,
+        sy,
+        sw: w,
+        sh: h,
+        x: sx + w * 0.5,
+        y: sy + h * 0.5,
+        vx: nX * rand(220, 720) + rand(-60, 60),
+        vy: nY * rand(180, 620) - rand(280, 680),
+        rot: rand(-0.3, 0.3),
+        vr: rand(-5.5, 5.5),
+        settled: false,
+      });
+    }
+    if (shards.length > maxShards) {
+      shards.splice(0, shards.length - maxShards);
+    }
+
+    for (let i = 0; i < 12; i++) {
+      const ang = rand(0, Math.PI * 2);
+      const speed = rand(220, 740);
+      sparks.push({
+        x: p.x,
+        y: p.y,
+        vx: Math.cos(ang) * speed,
+        vy: Math.sin(ang) * speed,
+        life: rand(0.2, 0.45),
+        maxLife: 0,
+      });
+      sparks[sparks.length - 1].maxLife = sparks[sparks.length - 1].life;
+    }
+  }
+
+  canvas.addEventListener("pointermove", (event) => {
+    const p = toCanvasPoint(event.clientX, event.clientY);
+    pointerX = p.x;
+    pointerY = p.y;
+    hasPointer = true;
+  });
+  canvas.addEventListener("pointerleave", () => {
+    hasPointer = false;
+  });
+  canvas.addEventListener("pointerdown", (event) => {
+    if (event.button !== 2) return;
+    event.preventDefault();
+    shoot(event.clientX, event.clientY);
+  });
+
+  canvas.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+  });
+
+
+
+  function updatePhysics(dt) {
+    const groundY = canvas.height - floorPadding * devicePixelRatio;
+
+    for (const shard of shards) {
+      if (shard.settled) continue;
+      shard.vy += gravity * dt;
+      shard.x += shard.vx * dt;
+      shard.y += shard.vy * dt;
+      shard.rot += shard.vr * dt;
+
+      if (shard.y + shard.sh * 0.5 >= groundY) {
+        shard.y = groundY - shard.sh * 0.5;
+        shard.vy *= -0.24;
+        shard.vx *= 0.78;
+        shard.vr *= 0.72;
+        if (Math.abs(shard.vy) < 20 && Math.abs(shard.vx) < 20) {
+          shard.vy = 0;
+          shard.vx = 0;
+          shard.vr = 0;
+          shard.settled = true;
+        }
+      }
+    }
+
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const s = sparks[i];
+      s.life -= dt;
+      if (s.life <= 0) {
+        sparks.splice(i, 1);
+        continue;
+      }
+      s.vy += gravity * 0.45 * dt;
+      s.x += s.vx * dt;
+      s.y += s.vy * dt;
+    }
+  }
+
+  function drawGround() {
+    const y = canvas.height - floorPadding * devicePixelRatio;
+    const h = floorPadding * devicePixelRatio;
+    ctx.fillStyle = "#00a800";
+    ctx.fillRect(0, y, canvas.width, h);
+    ctx.fillStyle = "#005800";
+    ctx.fillRect(0, y + h * 0.55, canvas.width, h * 0.45);
+    ctx.fillStyle = "#003800";
+    ctx.fillRect(0, y + h * 0.85, canvas.width, h * 0.15);
+  }
+
+  function drawHoleWarps() {
+    const ringCount = 8;
+    for (const hole of holes) {
+      const warpOuter = hole.r * 2.8;
+      for (let i = 0; i < ringCount; i++) {
+        const outerFrac = i / ringCount;
+        const innerFrac = (i + 1) / ringCount;
+        const ringOuter = warpOuter - outerFrac * (warpOuter - hole.r);
+        const ringInner = warpOuter - innerFrac * (warpOuter - hole.r);
+        const pull = innerFrac * innerFrac * 0.22;
+        const scale = 1 - pull;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(hole.x, hole.y, ringOuter, 0, Math.PI * 2);
+        ctx.arc(hole.x, hole.y, ringInner, 0, Math.PI * 2, true);
+        ctx.clip();
+        ctx.translate(hole.x, hole.y);
+        ctx.scale(scale, scale);
+        ctx.translate(-hole.x, -hole.y);
+        ctx.drawImage(sourceLayer, 0, 0);
+        ctx.restore();
+      }
+
+      const shadow = ctx.createRadialGradient(hole.x, hole.y, hole.r * 0.2, hole.x, hole.y, hole.r * 2.2);
+      shadow.addColorStop(0, "rgba(0,0,0,0.65)");
+      shadow.addColorStop(0.45, "rgba(0,0,0,0.2)");
+      shadow.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = shadow;
+      ctx.beginPath();
+      ctx.arc(hole.x, hole.y, hole.r * 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(hole.x, hole.y, hole.r * 1.4, 0, Math.PI * 2);
+      ctx.clip();
+      const bevel = ctx.createLinearGradient(hole.x - hole.r, hole.y - hole.r, hole.x + hole.r, hole.y + hole.r);
+      bevel.addColorStop(0, "rgba(255,255,255,0.07)");
+      bevel.addColorStop(0.5, "rgba(0,0,0,0)");
+      bevel.addColorStop(1, "rgba(0,0,0,0.18)");
+      ctx.fillStyle = bevel;
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawHoles() {
+    ctx.save();
+    ctx.fillStyle = "#000";
+    ctx.globalCompositeOperation = "destination-out";
+    for (const hole of holes) {
+      const jag = hole.r * 0.22;
+      ctx.beginPath();
+      for (let i = 0; i < 20; i++) {
+        const a = (i / 20) * Math.PI * 2;
+        const rr = hole.r + Math.sin(a * 6.0 + hole.x * 0.003) * jag + Math.cos(a * 3.7 + hole.y * 0.004) * jag * 0.6;
+        const x = hole.x + Math.cos(a) * rr;
+        const y = hole.y + Math.sin(a) * rr;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+
+    for (const hole of holes) {
+      const jag = hole.r * 0.22;
+      ctx.beginPath();
+      for (let i = 0; i < 20; i++) {
+        const a = (i / 20) * Math.PI * 2;
+        const rr =
+          hole.r * 1.04 + Math.sin(a * 6.0 + hole.x * 0.003) * jag + Math.cos(a * 3.7 + hole.y * 0.004) * jag * 0.6;
+        const x = hole.x + Math.cos(a) * rr;
+        const y = hole.y + Math.sin(a) * rr;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = "rgba(252,252,252,0.18)";
+      ctx.lineWidth = 2 * devicePixelRatio;
+      ctx.stroke();
+    }
+  }
+
+  function drawShards() {
+    for (const shard of shards) {
+      ctx.save();
+      ctx.translate(shard.x, shard.y);
+      ctx.rotate(shard.rot);
+      ctx.drawImage(
+        sourceLayer,
+        shard.sx,
+        shard.sy,
+        shard.sw,
+        shard.sh,
+        -shard.sw * 0.5,
+        -shard.sh * 0.5,
+        shard.sw,
+        shard.sh
+      );
+      ctx.strokeStyle = "rgba(252,252,252,0.22)";
+      ctx.lineWidth = 1.5 * devicePixelRatio;
+      ctx.strokeRect(-shard.sw * 0.5, -shard.sh * 0.5, shard.sw, shard.sh);
+      ctx.restore();
+    }
+  }
+
+  function drawSparks() {
+    for (const s of sparks) {
+      const t = s.life / s.maxLife;
+      const r = Math.round(252 - t * 20);
+      const g = Math.round(152 + t * 100);
+      const b = Math.round(56 * (1 - t));
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.25 + t * 0.75})`;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, (2 + t * 2.5) * devicePixelRatio, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawCrosshair() {
+    if (!hasPointer) return;
+    const r = 16 * devicePixelRatio;
+    const dot = 2.5 * devicePixelRatio;
+    ctx.strokeStyle = "#e40028";
+    ctx.lineWidth = 2.5 * devicePixelRatio;
+    ctx.beginPath();
+    ctx.arc(pointerX, pointerY, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = "#e40028";
+    ctx.beginPath();
+    ctx.arc(pointerX, pointerY, dot, 0, Math.PI * 2);
+    ctx.fill();
+    const tick = 6 * devicePixelRatio;
+    ctx.beginPath();
+    ctx.moveTo(pointerX, pointerY - r - tick);
+    ctx.lineTo(pointerX, pointerY - r + tick);
+    ctx.moveTo(pointerX, pointerY + r - tick);
+    ctx.lineTo(pointerX, pointerY + r + tick);
+    ctx.moveTo(pointerX - r - tick, pointerY);
+    ctx.lineTo(pointerX - r + tick, pointerY);
+    ctx.moveTo(pointerX + r - tick, pointerY);
+    ctx.lineTo(pointerX + r + tick, pointerY);
+    ctx.stroke();
+  }
+
+  canvas.onpaint = () => {
+    const now = performance.now();
+    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    lastTime = now;
+    updatePhysics(dt);
+
+    ctx.reset();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const sourceElement = canvas.firstElementChild;
+    if (!(sourceElement instanceof HTMLElement) || sourceElement.parentElement !== canvas) return;
+    const syncTransform = ctx.drawElementImage(sourceElement, 0, 0, canvas.width, canvas.height);
+    sourceElement.style.transform = syncTransform.toString();
+
+    sourceCtx.reset();
+    sourceCtx.clearRect(0, 0, sourceLayer.width, sourceLayer.height);
+    sourceCtx.drawImage(canvas, 0, 0);
+
+    drawHoleWarps();
+    drawHoles();
+    drawGround();
+    drawShards();
+    drawSparks();
+    drawCrosshair();
+  };
+
+  new ResizeObserver(([entry]) => {
+    const box = entry.devicePixelContentBoxSize[0];
+    setBackingSize(box.inlineSize, box.blockSize);
+  }).observe(canvas, { box: "device-pixel-content-box" });
+
+  function tick() {
+    canvas.requestPaint();
+    requestAnimationFrame(tick);
+  }
+  tick();
+</script>

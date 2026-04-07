@@ -1,0 +1,80 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Pie chart</title>
+
+<style>
+  .pie {
+    width: 250px;
+    height: 250px;
+  }
+  .pie .label {
+    text-align: center;
+    max-width: 40%;
+    font-family: sans-serif;
+  }
+  .pie .label .val {
+    display: block;
+    font-size: xx-large;
+    font-weight: bold;
+  }
+</style>
+
+<canvas layoutsubtree class="pie" role="list" aria-label="Pie Chart">
+  <div class="label" role="listitem" tabindex="0" data-val="0.45" data-color="tomato">
+    <span class="val">45%</span>Apple
+  </div>
+  <div class="label" role="listitem" tabindex="0" data-val="0.35" data-color="cornflowerblue">
+    <span class="val">35%</span>Blackberry / Bramble
+  </div>
+  <div class="label" role="listitem" tabindex="0" data-val="0.20" data-color="gold">
+    <span class="val">20%</span>Durian
+  </div>
+</canvas>
+
+<script>
+  const canvas = document.querySelector("canvas");
+  const ctx = canvas.getContext("2d");
+
+  canvas.onpaint = () => {
+    ctx.reset();
+
+    const radius = (0.95 * Math.min(canvas.width, canvas.height)) / 2;
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+
+    let angle = 0;
+    let focusedPath = null;
+    for (const label of canvas.children) {
+      const slice = Number(label.dataset.val) * Math.PI * 2;
+
+      const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
+      grad.addColorStop(0, `color-mix(${label.dataset.color}, white 40%)`);
+      grad.addColorStop(1, label.dataset.color);
+      ctx.fillStyle = grad;
+      const path = new Path2D();
+      path.moveTo(0, 0);
+      path.arc(0, 0, radius, angle, angle + slice);
+      path.closePath();
+      ctx.fill(path);
+      if (document.activeElement === label) focusedPath = path;
+
+      const mid = angle + slice / 2;
+      const labelWidth = label.offsetWidth * devicePixelRatio;
+      const labelHeight = label.offsetHeight * devicePixelRatio;
+      const x = Math.cos(mid) * radius * 0.6 - labelWidth / 2;
+      const y = Math.sin(mid) * radius * 0.6 - labelHeight / 2;
+      const transform = ctx.drawElementImage(label, x, y);
+      label.style.transform = transform;
+
+      angle += slice;
+    }
+
+    if (focusedPath) ctx.drawFocusIfNeeded(focusedPath, document.activeElement);
+  };
+  canvas.requestPaint();
+
+  new ResizeObserver(([entry]) => {
+    const box = entry.devicePixelContentBoxSize[0];
+    canvas.width = box.inlineSize;
+    canvas.height = box.blockSize;
+  }).observe(canvas, { box: ["device-pixel-content-box"] });
+</script>

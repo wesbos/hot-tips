@@ -1,0 +1,385 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Dot-shaded contact form</title>
+
+<style>
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at 20% 10%, #0f172a 0%, #020617 70%);
+    font-family:
+      Inter,
+      system-ui,
+      -apple-system,
+      Segoe UI,
+      Roboto,
+      sans-serif;
+  }
+
+  .stage {
+    position: relative;
+    width: min(960px, 94vw);
+    aspect-ratio: 16 / 10;
+  }
+
+  canvas {
+    width: 100%;
+    height: 100%;
+    width: min(960px, 94vw);
+    border-radius: 16px;
+    border: 1px solid rgb(148 163 184 / 30%);
+    box-shadow:
+      0 30px 80px rgb(0 0 0 / 45%),
+      inset 0 0 0 1px rgb(255 255 255 / 7%);
+    overflow: clip;
+  }
+
+  #source-canvas {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #fallback-content {
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    overflow: auto;
+  }
+
+  #draw_element {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    padding: clamp(16px, 2.2vw, 24px);
+    background: linear-gradient(180deg, #f8fafc, #e2e8f0);
+    color: #0f172a;
+  }
+
+  h1 {
+    margin: 0;
+    letter-spacing: -0.03em;
+    font-size: clamp(28px, 4vw, 44px);
+  }
+
+  p {
+    margin: 0;
+    color: #334155;
+  }
+
+  .contact {
+    margin-top: 8px;
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgb(100 116 139 / 45%);
+    background: rgb(255 255 255 / 75%);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .field {
+    display: grid;
+    gap: 4px;
+  }
+
+  .field.full {
+    grid-column: 1 / -1;
+  }
+
+  .field label {
+    font-size: 12px;
+    color: #334155;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 8px;
+    border: 1px solid rgb(100 116 139 / 50%);
+    background: rgb(255 255 255 / 95%);
+    color: #0f172a;
+    padding: 8px 10px;
+    font: inherit;
+  }
+
+  .field textarea {
+    min-height: 84px;
+    resize: none;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .actions button {
+    border: 1px solid rgb(15 23 42 / 40%);
+    background: #0f172a;
+    color: #f8fafc;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-weight: 600;
+  }
+
+  .hint {
+    margin-top: 10px;
+    color: #cbd5e1;
+    font-size: 13px;
+  }
+</style>
+
+<div class="stage">
+  <canvas id="source-canvas" layoutsubtree>
+    <div id="draw_element">
+      <h1>Contact Form</h1>
+      <p>
+        Rendered via <code>drawElementImage()</code> and post-processed with a black-and-white dots
+        fragment shader.
+      </p>
+      <form class="contact" action="#">
+        <div class="form-grid">
+          <div class="field">
+            <label for="name">Name</label>
+            <input id="name" type="text" placeholder="Jane Doe" />
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" placeholder="jane@example.com" />
+          </div>
+          <div class="field">
+            <label for="topic">Topic</label>
+            <select id="topic">
+              <option>Product question</option>
+              <option>Pricing</option>
+              <option>Support</option>
+              <option>Partnership</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="company">Company</label>
+            <input id="company" type="text" placeholder="Acme Inc." />
+          </div>
+          <div class="field full">
+            <label for="message">Message</label>
+            <textarea id="message" placeholder="Tell us a little about your project."></textarea>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">Send message</button>
+        </div>
+      </form>
+    </div>
+  </canvas>
+  <canvas id="canvas"></canvas>
+  <div id="fallback-content" hidden></div>
+</div>
+<p class="hint">Move cursor to vary dot shading.</p>
+
+<script>
+  const sourceCanvas = document.getElementById("source-canvas");
+  const sourceCtx = sourceCanvas.getContext("2d");
+  const canvas = document.getElementById("canvas");
+  const fallbackContent = document.getElementById("fallback-content");
+  const hint = document.querySelector(".hint");
+  const gl = canvas.getContext("webgl", { antialias: true });
+
+  function enableFallback(message) {
+    const element = sourceCanvas.firstElementChild;
+    if (element instanceof HTMLElement) {
+      fallbackContent.innerHTML = "";
+      fallbackContent.appendChild(element.cloneNode(true));
+      fallbackContent.hidden = false;
+    }
+    sourceCanvas.hidden = true;
+    canvas.hidden = true;
+    if (hint) hint.textContent = message;
+  }
+
+  if (!gl) {
+    enableFallback("WebGL unavailable, showing raw contact form.");
+    throw new Error("WebGL unavailable");
+  }
+
+  let mouseX = 0;
+  let mouseY = 0;
+
+  const vertexSource = `
+attribute vec2 a_position;
+varying vec2 v_uv;
+
+void main() {
+  v_uv = a_position * 0.5 + 0.5;
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}
+`;
+
+  // Adapted from https://webgl-shaders.com/dots-example.html
+  const fragmentSource = `
+precision mediump float;
+
+uniform sampler2D u_texture;
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+varying vec2 v_uv;
+
+float circle(vec2 pixel, vec2 center, float radius) {
+  return 1.0 - smoothstep(radius - 1.0, radius + 1.0, length(pixel - center));
+}
+
+mat2 rotate(float angle) {
+  return mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+}
+
+void main() {
+  vec4 tex = texture2D(u_texture, v_uv);
+  float luma = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
+
+  vec2 pos = gl_FragCoord.xy - 0.5 * u_resolution;
+  pos = rotate(radians(20.0)) * pos;
+
+  float min_resolution = min(u_resolution.x, u_resolution.y);
+  vec2 mouseNorm = (u_mouse - 0.5 * u_resolution) / min_resolution;
+  float mouseBoost = 0.35 + clamp(length(mouseNorm) * 2.0, 0.0, 0.9);
+
+  float gridStep = 10.0;
+  vec2 gridPos = mod(pos, gridStep);
+  float radius = 0.85 * gridStep * (1.0 - luma) * mouseBoost;
+  float dotMask = circle(gridPos, vec2(gridStep * 0.5), radius);
+
+  float bw = 1.0 - dotMask;
+  bw = clamp(bw, 0.04, 1.0);
+  gl_FragColor = vec4(vec3(bw), 1.0);
+}
+`;
+
+  function createShader(type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      throw new Error(gl.getShaderInfoLog(shader) || "shader compile failed");
+    }
+    return shader;
+  }
+
+  const vert = createShader(gl.VERTEX_SHADER, vertexSource);
+  const frag = createShader(gl.FRAGMENT_SHADER, fragmentSource);
+  const program = gl.createProgram();
+  gl.attachShader(program, vert);
+  gl.attachShader(program, frag);
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    throw new Error(gl.getProgramInfoLog(program) || "program link failed");
+  }
+
+  const positionLoc = gl.getAttribLocation(program, "a_position");
+  const resolutionLoc = gl.getUniformLocation(program, "u_resolution");
+  const mouseLoc = gl.getUniformLocation(program, "u_mouse");
+  const textureLoc = gl.getUniformLocation(program, "u_texture");
+
+  const quad = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  let rafId = 0;
+  const requestRender = () => {
+    if (rafId) return;
+    rafId = requestAnimationFrame(() => {
+      rafId = 0;
+      render();
+    });
+  };
+
+  canvas.addEventListener("pointermove", (event) => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = (event.clientX - rect.left) * devicePixelRatio;
+    mouseY = (rect.bottom - event.clientY) * devicePixelRatio;
+    requestRender();
+  });
+
+  sourceCanvas.onpaint = () => {
+    if (typeof sourceCtx.drawElementImage !== "function") {
+      enableFallback("drawElementImage is unavailable in this browser build.");
+      return;
+    }
+    sourceCtx.reset();
+    sourceCtx.clearRect(0, 0, sourceCanvas.width, sourceCanvas.height);
+    const element = sourceCanvas.firstElementChild;
+    if (!(element instanceof HTMLElement)) return;
+    let syncTransform;
+    try {
+      syncTransform = sourceCtx.drawElementImage(
+        element,
+        0,
+        0,
+        sourceCanvas.width,
+        sourceCanvas.height,
+      );
+    } catch {
+      enableFallback("drawElementImage failed in this session, showing raw contact form.");
+      return;
+    }
+    element.style.transform = syncTransform.toString();
+    requestRender();
+  };
+
+  function render() {
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clearColor(1, 1, 1, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sourceCanvas);
+
+    gl.useProgram(program);
+    gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+    gl.enableVertexAttribArray(positionLoc);
+    gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+    gl.uniform2f(resolutionLoc, canvas.width, canvas.height);
+    gl.uniform2f(mouseLoc, mouseX, mouseY);
+    gl.uniform1i(textureLoc, 0);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  new ResizeObserver(([entry]) => {
+    const box = entry.devicePixelContentBoxSize[0];
+    sourceCanvas.width = box.inlineSize;
+    sourceCanvas.height = box.blockSize;
+    canvas.width = box.inlineSize;
+    canvas.height = box.blockSize;
+    mouseX = canvas.width * 0.5;
+    mouseY = canvas.height * 0.5;
+    sourceCanvas.requestPaint();
+  }).observe(canvas, { box: "device-pixel-content-box" });
+
+  requestAnimationFrame(() => {
+    if (!canvas.hidden) sourceCanvas.requestPaint();
+  });
+</script>

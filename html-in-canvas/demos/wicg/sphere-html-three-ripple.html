@@ -1,0 +1,443 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>HTML on sphere with ripples (Three.js)</title>
+
+<style>
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at 20% 10%, #1d4ed8 0%, #0f172a 45%, #020617 100%);
+    font-family:
+      Inter,
+      system-ui,
+      -apple-system,
+      Segoe UI,
+      Roboto,
+      sans-serif;
+  }
+
+  canvas {
+    width: min(980px, 94vw);
+    aspect-ratio: 16 / 10;
+    border-radius: 16px;
+    border: 1px solid rgb(148 163 184 / 35%);
+    box-shadow:
+      0 30px 80px rgb(0 0 0 / 45%),
+      inset 0 0 0 1px rgb(255 255 255 / 6%);
+    overflow: clip;
+  }
+
+  #draw_element {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid rgb(148 163 184 / 40%);
+    background:
+      radial-gradient(circle at 90% 10%, rgb(6 182 212 / 18%), transparent 32%),
+      linear-gradient(180deg, #0f172a, #0b1224 35%, #0a1020 100%);
+    color: #e2e8f0;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 28px;
+    letter-spacing: -0.03em;
+  }
+
+  p {
+    margin: 0;
+    color: #cbd5e1;
+  }
+
+  .toolbar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .new-todo {
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 8px;
+    border: 1px solid rgb(148 163 184 / 35%);
+    background: rgb(2 6 23 / 70%);
+    color: #e2e8f0;
+    padding: 8px 10px;
+    font: inherit;
+  }
+
+  .todos {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 8px;
+  }
+
+  .todo {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    align-items: center;
+    border: 1px solid rgb(148 163 184 / 30%);
+    border-radius: 10px;
+    padding: 10px;
+    background: rgb(15 23 42 / 55%);
+  }
+
+  .todo input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+  }
+
+  .todo .meta {
+    font-size: 12px;
+    color: #94a3b8;
+  }
+
+  .todo.done .title {
+    text-decoration: line-through;
+    color: #94a3b8;
+  }
+
+  .todo .title {
+    font-weight: 600;
+  }
+
+  .todo .edit-input {
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 6px;
+    border: 1px solid rgb(96 165 250 / 65%);
+    background: rgb(2 6 23 / 85%);
+    color: #e2e8f0;
+    padding: 5px 8px;
+    font: inherit;
+    font-weight: 600;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 8px;
+    border: 1px solid rgb(148 163 184 / 35%);
+    background: rgb(2 6 23 / 70%);
+    color: #e2e8f0;
+    padding: 8px 10px;
+    font: inherit;
+  }
+
+  button {
+    justify-self: start;
+    border: 1px solid rgb(96 165 250 / 70%);
+    background: linear-gradient(180deg, rgb(59 130 246 / 85%), rgb(37 99 235 / 85%));
+    color: #eff6ff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-weight: 600;
+  }
+</style>
+
+<canvas id="canvas" layoutsubtree>
+  <div id="draw_element">
+    <h1>Todo Website + Ripples</h1>
+    <p>Move your mouse to create water ripples across the webpage.</p>
+    <div class="toolbar">
+      <input class="new-todo" type="text" placeholder="Add a task..." />
+      <button type="button" class="add-btn">Add</button>
+    </div>
+    <ul class="todos">
+      <li class="todo done">
+        <input type="checkbox" checked />
+        <div>
+          <div class="title">Sketch sphere mapping demo</div>
+          <div class="meta">Completed</div>
+        </div>
+        <button type="button" class="edit-btn">Edit</button>
+      </li>
+      <li class="todo">
+        <input type="checkbox" />
+        <div>
+          <div class="title">Add ripple deformation</div>
+          <div class="meta">In progress</div>
+        </div>
+        <button type="button" class="edit-btn">Edit</button>
+      </li>
+      <li class="todo">
+        <input type="checkbox" />
+        <div>
+          <div class="title">Tune touch interactions</div>
+          <div class="meta">Due this week</div>
+        </div>
+        <button type="button" class="edit-btn">Edit</button>
+      </li>
+    </ul>
+  </div>
+</canvas>
+
+<script type="module">
+  import * as THREE from "https://unpkg.com/three@0.180.0/build/three.module.js";
+
+  const canvas = document.getElementById("canvas");
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  const scene = new THREE.Scene();
+  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const MAX_RIPPLES = 24;
+
+  const ripples = [];
+  let lastRippleSpawn = 0;
+
+  const gl = renderer.getContext();
+  const glTexture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, glTexture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.bindTexture(gl.TEXTURE_2D, null);
+
+  const htmlTexture = new THREE.Texture();
+  htmlTexture.isRenderTargetTexture = true;
+  htmlTexture.colorSpace = THREE.SRGBColorSpace;
+  renderer.properties.get(htmlTexture).__webglTexture = glTexture;
+
+  const material = new THREE.ShaderMaterial({
+    uniforms: {
+      uTexture: { value: htmlTexture },
+      uTime: { value: 0 },
+      uRippleCount: { value: 0 },
+      uRippleData: { value: Array.from({ length: MAX_RIPPLES }, () => new THREE.Vector4()) },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position.xy, 0.0, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D uTexture;
+      uniform float uTime;
+      uniform int uRippleCount;
+      uniform vec4 uRippleData[${MAX_RIPPLES}];
+      varying vec2 vUv;
+
+      void main() {
+        vec2 uv = vUv;
+        vec2 offset = vec2(0.0);
+
+        for (int i = 0; i < ${MAX_RIPPLES}; i++) {
+          if (i >= uRippleCount) break;
+          vec4 r = uRippleData[i];
+          float age = uTime - r.z;
+          if (age <= 0.0 || age > 2.2) continue;
+          vec2 d = uv - r.xy;
+          float dist = length(d);
+          float wave = sin(dist * 84.0 - age * 22.0);
+          float envelope = exp(-dist * 18.0) * exp(-age * 1.5);
+          vec2 dir = d / max(dist, 0.0001);
+          offset += dir * wave * envelope * 0.018 * r.w;
+        }
+
+        gl_FragColor = texture2D(uTexture, uv + offset);
+      }
+    `,
+  });
+
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
+  scene.add(quad);
+
+  function paintHtmlToTexture() {
+    const element = canvas.firstElementChild;
+    if (!element) return;
+    gl.bindTexture(gl.TEXTURE_2D, glTexture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texElementImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, element);
+  }
+
+  canvas.addEventListener("paint", paintHtmlToTexture);
+
+  const drawElement = canvas.firstElementChild;
+  if (drawElement instanceof HTMLElement) {
+    const todoList = drawElement.querySelector(".todos");
+    const newTodoInput = drawElement.querySelector(".new-todo");
+
+    const finishInlineEdit = (row, commit) => {
+      const titleEl = row.querySelector(".title");
+      const inputEl = row.querySelector(".edit-input");
+      const editBtn = row.querySelector(".edit-btn");
+      if (!(titleEl instanceof HTMLElement) || !(inputEl instanceof HTMLInputElement)) return;
+      if (commit) {
+        titleEl.textContent = inputEl.value.trim() || "Untitled task";
+      } else {
+        const original = row.dataset.originalTitle;
+        if (typeof original === "string") titleEl.textContent = original;
+      }
+      inputEl.remove();
+      titleEl.hidden = false;
+      row.dataset.editing = "false";
+      if (editBtn instanceof HTMLButtonElement) editBtn.textContent = "Edit";
+      canvas.requestPaint();
+    };
+
+    const startInlineEdit = (row) => {
+      const titleEl = row.querySelector(".title");
+      const editBtn = row.querySelector(".edit-btn");
+      if (!(titleEl instanceof HTMLElement)) return;
+      if (row.dataset.editing === "true") return;
+      row.dataset.originalTitle = titleEl.textContent ?? "";
+      row.dataset.editing = "true";
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "edit-input";
+      input.value = titleEl.textContent ?? "";
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          finishInlineEdit(row, true);
+        } else if (event.key === "Escape") {
+          event.preventDefault();
+          finishInlineEdit(row, false);
+        }
+      });
+      input.addEventListener("blur", () => finishInlineEdit(row, true));
+      titleEl.hidden = true;
+      titleEl.after(input);
+      if (editBtn instanceof HTMLButtonElement) editBtn.textContent = "Save";
+      input.focus();
+      input.select();
+      canvas.requestPaint();
+    };
+
+    drawElement.addEventListener("change", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement) || target.type !== "checkbox") return;
+      const row = target.closest(".todo");
+      if (!row) return;
+      row.classList.toggle("done", target.checked);
+      canvas.requestPaint();
+    });
+
+    drawElement.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+
+      if (target.closest(".edit-btn")) {
+        const row = target.closest(".todo");
+        if (!row) return;
+        if (row.dataset.editing === "true") finishInlineEdit(row, true);
+        else startInlineEdit(row);
+        return;
+      }
+
+      if (target.closest(".add-btn")) {
+        if (!(todoList instanceof HTMLElement) || !(newTodoInput instanceof HTMLInputElement))
+          return;
+        const value = newTodoInput.value.trim();
+        if (!value) return;
+        const item = document.createElement("li");
+        item.className = "todo";
+        item.innerHTML = `
+          <input type="checkbox" />
+          <div>
+            <div class="title"></div>
+            <div class="meta">New</div>
+          </div>
+          <button type="button" class="edit-btn">Edit</button>
+        `;
+        const titleNode = item.querySelector(".title");
+        if (titleNode) titleNode.textContent = value;
+        todoList.appendChild(item);
+        newTodoInput.value = "";
+        canvas.requestPaint();
+      }
+    });
+
+    if (newTodoInput instanceof HTMLInputElement) {
+      newTodoInput.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        const addBtn = drawElement.querySelector(".add-btn");
+        if (addBtn instanceof HTMLButtonElement) addBtn.click();
+      });
+    }
+  }
+
+  for (const control of canvas.querySelectorAll("input, button")) {
+    control.addEventListener("input", () => canvas.requestPaint());
+    control.addEventListener("change", () => canvas.requestPaint());
+    control.addEventListener("focus", () => canvas.requestPaint());
+    control.addEventListener("blur", () => canvas.requestPaint());
+  }
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    const width = Math.max(1, Math.round(rect.width * devicePixelRatio));
+    const height = Math.max(1, Math.round(rect.height * devicePixelRatio));
+    renderer.setSize(width, height, false);
+    canvas.requestPaint();
+  }
+
+  function pointerToUv(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const u = (clientX - rect.left) / rect.width;
+    const v = 1 - (clientY - rect.top) / rect.height;
+    return { u: Math.max(0, Math.min(1, u)), v: Math.max(0, Math.min(1, v)) };
+  }
+
+  function spawnRipple(clientX, clientY) {
+    const now = performance.now() * 0.001;
+    if (now - lastRippleSpawn < 0.03) return;
+    const uv = pointerToUv(clientX, clientY);
+    ripples.push({ u: uv.u, v: uv.v, start: now, strength: 1 });
+    if (ripples.length > MAX_RIPPLES) ripples.shift();
+    lastRippleSpawn = now;
+  }
+
+  function updateRippleUniforms(time) {
+    const cutoff = time - 2.3;
+    while (ripples.length && ripples[0].start < cutoff) ripples.shift();
+    material.uniforms.uTime.value = time;
+    material.uniforms.uRippleCount.value = ripples.length;
+    const arr = material.uniforms.uRippleData.value;
+    for (let i = 0; i < MAX_RIPPLES; i++) {
+      const r = ripples[i];
+      if (r) arr[i].set(r.u, r.v, r.start, r.strength);
+      else arr[i].set(0, 0, -1000, 0);
+    }
+  }
+
+  new ResizeObserver(resize).observe(canvas);
+  resize();
+
+  canvas.addEventListener("pointerdown", (event) => {
+    spawnRipple(event.clientX, event.clientY);
+  });
+
+  canvas.addEventListener("pointermove", (event) => {
+    spawnRipple(event.clientX, event.clientY);
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+    updateRippleUniforms(performance.now() * 0.001);
+    renderer.render(scene, camera);
+  }
+
+  canvas.requestPaint();
+  animate();
+</script>

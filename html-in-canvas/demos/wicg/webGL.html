@@ -1,0 +1,188 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Demo of complex text in WebGL</title>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"
+  integrity="sha512-zhHQR0/H5SEBL3Wn6yYSaTTZej12z0hVZKOv3TwCUXT1z5qeqGcXJLLrbERYRScEDDpYIJhPC1fk31gqR783iQ=="
+  crossorigin="anonymous"
+  defer
+></script>
+<script src="./webGLSetup.js"></script>
+<style>
+  canvas {
+    border: 1px solid blue;
+    width: 638px;
+    height: 318px;
+  }
+  #status {
+    margin-top: 10px;
+    max-width: 638px;
+    padding: 8px 10px;
+    border: 1px solid #7f1d1d;
+    border-radius: 6px;
+    background: #1f1111;
+    color: #fecaca;
+    font:
+      13px/1.4 system-ui,
+      sans-serif;
+    white-space: pre-wrap;
+  }
+  #draw_element {
+    border: 1px solid blue;
+    width: 400px;
+    height: 400px;
+    padding: 10px;
+  }
+</style>
+
+<canvas id="gl-canvas" width="638" height="318" layoutsubtree="true">
+  <div id="draw_element" inert>
+    Hello world!<br />I'm multi-line, <b>formatted</b>, rotated text with emoji (&#128512;), RTL
+    text <span dir="rtl">من فارسی صحبت میکنم</span>, vertical text,
+    <p style="writing-mode: vertical-rl">这是垂直文本</p>
+    an inline image (<img
+      width="150"
+      src="https://wicg.github.io/html-in-canvas/Examples/wolf.jpg"
+    />), and
+    <svg width="50" height="50">
+      <circle cx="25" cy="25" r="20" fill="green" />
+      <text x="25" y="30" font-size="15" text-anchor="middle" fill="#fff">SVG</text>
+    </svg>
+    !
+  </div>
+</canvas>
+<div id="status" hidden></div>
+
+<script>
+  let cubeRotation = 0.0;
+  let currentTime = 0;
+  let deltaTime = 0;
+  let renderContext = null;
+  let didInit = false;
+  let lastContextType = "";
+
+  function showStatus(message) {
+    const status = document.getElementById("status");
+    status.hidden = false;
+    status.textContent = message;
+    console.error(message);
+  }
+
+  function loadTexture(gl) {
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texElementImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, draw_element);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return texture;
+  }
+
+  function render() {
+    const newTime = performance.now() * 0.001;
+    deltaTime = newTime - currentTime;
+    currentTime = newTime;
+    if (!renderContext) return;
+
+    drawScene(
+      renderContext.gl,
+      renderContext.program,
+      renderContext.buffers,
+      renderContext.texture,
+      cubeRotation,
+    );
+
+    cubeRotation += deltaTime;
+    requestAnimationFrame(render);
+  }
+
+  function main() {
+    if (didInit) return;
+    didInit = true;
+
+    const canvas = document.querySelector("#gl-canvas");
+    canvas.addEventListener("webglcontextcreationerror", (event) => {
+      event.preventDefault();
+      const msg = event.statusMessage ? ` (${event.statusMessage})` : "";
+      showStatus(`webglcontextcreationerror${msg}`);
+    });
+
+    const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
+    if (!gl) {
+      showStatus(
+        [
+          "Unable to initialize WebGL context.",
+          "Likely cause: browser/GPU process settings (not this demo code).",
+          "",
+          "Check:",
+          "- chrome://flags/#canvas-draw-element = Enabled",
+          "- chrome://gpu -> WebGL should be Hardware accelerated (not Disabled)",
+          "- Settings > System > Use graphics acceleration when available = On",
+          "- No --disable-gpu / --disable-3d-apis launch flags",
+        ].join("\n"),
+      );
+      return;
+    }
+    lastContextType = gl instanceof WebGL2RenderingContext ? "webgl2" : "webgl";
+
+    const vsSource = `
+      attribute vec4 aVertexPosition;
+      attribute vec2 aTextureCoord;
+      uniform mat4 uModelViewMatrix;
+      uniform mat4 uProjectionMatrix;
+      varying highp vec2 vTextureCoord;
+      void main(void) {
+        gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+        vTextureCoord = aTextureCoord;
+      }
+    `;
+
+    const fsSource = `
+      varying highp vec2 vTextureCoord;
+      uniform sampler2D uSampler;
+      void main(void) {
+        gl_FragColor = texture2D(uSampler, vTextureCoord);
+      }
+    `;
+
+    const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
+    const programInfo = {
+      program: shaderProgram,
+      attribLocations: {
+        vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
+        textureCoord: gl.getAttribLocation(shaderProgram, "aTextureCoord"),
+      },
+      uniformLocations: {
+        projectionMatrix: gl.getUniformLocation(shaderProgram, "uProjectionMatrix"),
+        modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix"),
+        uSampler: gl.getUniformLocation(shaderProgram, "uSampler"),
+      },
+    };
+
+    const buffers = initBuffers(gl);
+    if (typeof gl.texElementImage2D !== "function") {
+      showStatus(
+        `Context '${lastContextType}' created, but texElementImage2D is missing.\n` +
+          "That usually means the html-in-canvas experimental API is not active for WebGL.",
+      );
+      return;
+    }
+    const texture = loadTexture(gl);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
+    renderContext = { gl, program: programInfo, buffers, texture };
+    requestAnimationFrame(render);
+  }
+
+  onload = () => {
+    const canvas = document.querySelector("#gl-canvas");
+    canvas.onpaint = () => main();
+    canvas.requestPaint();
+
+    const observer = new ResizeObserver(([entry]) => {
+      canvas.width = entry.devicePixelContentBoxSize[0].inlineSize;
+      canvas.height = entry.devicePixelContentBoxSize[0].blockSize;
+    });
+    observer.observe(canvas, { box: "device-pixel-content-box" });
+  };
+</script>

@@ -1,0 +1,585 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Todo puzzle</title>
+
+<style>
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at 20% 10%, #1e293b 0%, #0b1020 56%, #030712 100%);
+    font-family:
+      Inter,
+      system-ui,
+      -apple-system,
+      Segoe UI,
+      Roboto,
+      sans-serif;
+  }
+
+  .demo-shell {
+    width: min(1000px, 94vw);
+    display: grid;
+    gap: 12px;
+    justify-items: stretch;
+  }
+
+  canvas {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-radius: 16px;
+    border: 1px solid rgb(148 163 184 / 35%);
+    box-shadow:
+      0 30px 80px rgb(0 0 0 / 45%),
+      inset 0 0 0 1px rgb(255 255 255 / 6%);
+    overflow: clip;
+    cursor: default;
+  }
+
+  #draw_element {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-rows: auto auto auto 1fr;
+    gap: 12px;
+    padding: clamp(14px, 2vw, 24px);
+    background:
+      radial-gradient(circle at 90% 10%, rgb(6 182 212 / 22%), transparent 32%),
+      radial-gradient(circle at 12% 80%, rgb(59 130 246 / 18%), transparent 28%),
+      linear-gradient(180deg, #0f172a, #0b1224 36%, #0a1020 100%);
+    color: #e2e8f0;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(26px, 3.8vw, 46px);
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+  }
+
+  p {
+    margin: 0;
+    color: #cbd5e1;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .field {
+    display: grid;
+    gap: 6px;
+  }
+
+  .field.full {
+    grid-column: 1 / -1;
+  }
+
+  label {
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .input {
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 8px;
+    border: 1px solid rgb(148 163 184 / 35%);
+    background: rgb(2 6 23 / 70%);
+    color: #e2e8f0;
+    padding: 8px 10px;
+    font: inherit;
+  }
+
+  textarea.input {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  .submit-btn {
+    border: 1px solid rgb(96 165 250 / 70%);
+    background: linear-gradient(180deg, rgb(59 130 246 / 85%), rgb(37 99 235 / 85%));
+    color: #eff6ff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-weight: 600;
+  }
+
+  .controls {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .solve-btn {
+    border: 1px solid rgb(34 197 94 / 72%);
+    background: linear-gradient(180deg, rgb(34 197 94 / 85%), rgb(22 163 74 / 85%));
+    color: #ecfdf5;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font: inherit;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+  }
+</style>
+
+<div class="demo-shell">
+  <canvas id="canvas" layoutsubtree>
+    <div id="draw_element">
+      <h1>Contact Puzzle</h1>
+      <p>Right-click drag pieces into place. They magnet-snap when close. Press R to reshuffle.</p>
+      <div class="form-grid">
+        <div class="field">
+          <label for="name">Name</label>
+          <input id="name" class="input" type="text" value="Wes Bos" />
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" class="input" type="email" value="wes@example.com" />
+        </div>
+        <div class="field full">
+          <label for="topic">Topic</label>
+          <select id="topic" class="input">
+            <option>Tip idea</option>
+            <option selected>Sponsorship</option>
+            <option>Feedback</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="message">Message</label>
+          <textarea id="message" class="input">
+Loved the html-in-canvas demos. I'd like to sponsor a full series.</textarea
+          >
+        </div>
+        <div class="field full">
+          <button class="submit-btn" type="button">Send Message</button>
+        </div>
+      </div>
+    </div>
+  </canvas>
+  <div class="controls">
+    <button id="solve-btn" class="solve-btn" type="button">Solve</button>
+  </div>
+</div>
+
+<script>
+  const canvas = document.getElementById("canvas");
+  const solveButton = document.getElementById("solve-btn");
+  const ctx = canvas.getContext("2d");
+  const sourceLayer = document.createElement("canvas");
+  const sourceCtx = sourceLayer.getContext("2d");
+
+  const COLS = 5;
+  const ROWS = 4;
+  const SNAP_DISTANCE = 16;
+  const MAGNET_DISTANCE = 34;
+
+  const pieces = [];
+  let zCounter = 1;
+  let drag = null;
+  let solved = false;
+  let tabDepth = 0;
+  let tabWidthRatio = 0.22;
+
+  function randomEdgeSign() {
+    return Math.random() > 0.5 ? 1 : -1;
+  }
+
+  function makeEdge(sign) {
+    if (sign === 0) {
+      return { sign: 0, offset: 0, width: 1, depth: 1 };
+    }
+    return {
+      sign,
+      offset: (Math.random() - 0.5) * 0.26,
+      width: 0.86 + Math.random() * 0.34,
+      depth: 0.86 + Math.random() * 0.34,
+    };
+  }
+
+  function invertEdge(edge) {
+    return {
+      sign: -edge.sign,
+      offset: edge.offset,
+      width: edge.width,
+      depth: edge.depth,
+    };
+  }
+
+  function toCanvasPoint(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (clientX - rect.left) * devicePixelRatio,
+      y: (clientY - rect.top) * devicePixelRatio,
+    };
+  }
+
+  function setBackingSize(width, height) {
+    canvas.width = width;
+    canvas.height = height;
+    sourceLayer.width = width;
+    sourceLayer.height = height;
+    pieces.length = 0;
+    solved = false;
+    canvas.requestPaint();
+  }
+
+  function buildPieces() {
+    pieces.length = 0;
+    solved = false;
+    const pw = sourceLayer.width / COLS;
+    const ph = sourceLayer.height / ROWS;
+    tabDepth = Math.min(pw, ph) * 0.26;
+    tabWidthRatio = 0.24;
+    const minAway = Math.min(sourceLayer.width, sourceLayer.height) * 0.22;
+
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+        const top = row === 0 ? makeEdge(0) : invertEdge(pieces[(row - 1) * COLS + col].bottom);
+        const left = col === 0 ? makeEdge(0) : invertEdge(pieces[row * COLS + (col - 1)].right);
+        const right = col === COLS - 1 ? makeEdge(0) : makeEdge(randomEdgeSign());
+        const bottom = row === ROWS - 1 ? makeEdge(0) : makeEdge(randomEdgeSign());
+        const tx = col * pw;
+        const ty = row * ph;
+        let x = tx;
+        let y = ty;
+        let tries = 0;
+        while (tries < 80) {
+          x = Math.random() * (sourceLayer.width - pw);
+          y = Math.random() * (sourceLayer.height - ph);
+          const d = Math.hypot(x - tx, y - ty);
+          if (d > minAway) break;
+          tries++;
+        }
+        pieces.push({
+          sx: tx,
+          sy: ty,
+          sw: pw,
+          sh: ph,
+          tx,
+          ty,
+          x,
+          y,
+          top,
+          right,
+          bottom,
+          left,
+          snapPreview: false,
+          placed: false,
+          z: zCounter++,
+        });
+      }
+    }
+  }
+
+  function addHorizontalEdge(path, x1, x2, y, edge, normalDir) {
+    const span = Math.abs(x2 - x1);
+    const dir = Math.sign(x2 - x1);
+    const tabHalf = span * tabWidthRatio * edge.width;
+    const minX = Math.min(x1, x2);
+    const maxX = Math.max(x1, x2);
+    const centered = (x1 + x2) / 2 + edge.offset * span;
+    const center = Math.max(minX + tabHalf * 1.2, Math.min(maxX - tabHalf * 1.2, centered));
+    const edgeStart = center - tabHalf * dir;
+    const edgeEnd = center + tabHalf * dir;
+    const neckHalf = tabHalf * 0.52;
+    const neckStart = center - neckHalf * dir;
+    const neckEnd = center + neckHalf * dir;
+    const crest = y + normalDir * edge.sign * tabDepth * edge.depth;
+    const shoulder = y + normalDir * edge.sign * tabDepth * edge.depth * 0.46;
+    const handle = tabHalf * 0.26 * dir;
+    path.lineTo(edgeStart, y);
+    if (edge.sign !== 0) {
+      path.bezierCurveTo(
+        edgeStart + handle,
+        y,
+        neckStart - handle * 0.5,
+        shoulder,
+        neckStart,
+        shoulder,
+      );
+      path.bezierCurveTo(
+        neckStart + handle * 0.5,
+        crest,
+        neckEnd - handle * 0.5,
+        crest,
+        neckEnd,
+        shoulder,
+      );
+      path.bezierCurveTo(neckEnd + handle * 0.5, shoulder, edgeEnd - handle, y, edgeEnd, y);
+    }
+    path.lineTo(x2, y);
+  }
+
+  function addVerticalEdge(path, y1, y2, x, edge, normalDir) {
+    const span = Math.abs(y2 - y1);
+    const dir = Math.sign(y2 - y1);
+    const tabHalf = span * tabWidthRatio * edge.width;
+    const minY = Math.min(y1, y2);
+    const maxY = Math.max(y1, y2);
+    const centered = (y1 + y2) / 2 + edge.offset * span;
+    const center = Math.max(minY + tabHalf * 1.2, Math.min(maxY - tabHalf * 1.2, centered));
+    const edgeStart = center - tabHalf * dir;
+    const edgeEnd = center + tabHalf * dir;
+    const neckHalf = tabHalf * 0.52;
+    const neckStart = center - neckHalf * dir;
+    const neckEnd = center + neckHalf * dir;
+    const crest = x + normalDir * edge.sign * tabDepth * edge.depth;
+    const shoulder = x + normalDir * edge.sign * tabDepth * edge.depth * 0.46;
+    const handle = tabHalf * 0.26 * dir;
+    path.lineTo(x, edgeStart);
+    if (edge.sign !== 0) {
+      path.bezierCurveTo(
+        x,
+        edgeStart + handle,
+        shoulder,
+        neckStart - handle * 0.5,
+        shoulder,
+        neckStart,
+      );
+      path.bezierCurveTo(
+        crest,
+        neckStart + handle * 0.5,
+        crest,
+        neckEnd - handle * 0.5,
+        shoulder,
+        neckEnd,
+      );
+      path.bezierCurveTo(shoulder, neckEnd + handle * 0.5, x, edgeEnd - handle, x, edgeEnd);
+    }
+    path.lineTo(x, y2);
+  }
+
+  function buildPiecePath(piece, ox, oy) {
+    const path = new Path2D();
+    const x = piece.x + ox;
+    const y = piece.y + oy;
+    const w = piece.sw;
+    const h = piece.sh;
+    path.moveTo(x, y);
+    addHorizontalEdge(path, x, x + w, y, piece.top, -1);
+    addVerticalEdge(path, y, y + h, x + w, piece.right, 1);
+    addHorizontalEdge(path, x + w, x, y + h, piece.bottom, 1);
+    addVerticalEdge(path, y + h, y, x, piece.left, -1);
+    path.closePath();
+    return path;
+  }
+
+  function pickPiece(x, y) {
+    const ordered = pieces.slice().sort((a, b) => b.z - a.z);
+    for (const piece of ordered) {
+      const path = buildPiecePath(piece, 0, 0);
+      if (ctx.isPointInPath(path, x, y)) {
+        return piece;
+      }
+    }
+    return null;
+  }
+
+  function drawPuzzleBoard() {
+    ctx.save();
+    ctx.strokeStyle = "rgba(148, 163, 184, 0.2)";
+    ctx.lineWidth = 1 * devicePixelRatio;
+    for (const piece of pieces) {
+      if (piece.placed) continue;
+      const px = piece.x;
+      const py = piece.y;
+      piece.x = piece.tx;
+      piece.y = piece.ty;
+      const slotPath = buildPiecePath(piece, 0, 0);
+      piece.x = px;
+      piece.y = py;
+      ctx.stroke(slotPath);
+    }
+    ctx.restore();
+  }
+
+  function drawPieces() {
+    const ordered = pieces.slice().sort((a, b) => a.z - b.z);
+    for (const piece of ordered) {
+      const path = buildPiecePath(piece, 0, 0);
+
+      ctx.save();
+      ctx.fillStyle = "rgb(2 6 23 / 60%)";
+      ctx.fill(path);
+      ctx.restore();
+
+      ctx.save();
+      ctx.shadowColor = "rgb(2 6 23 / 55%)";
+      ctx.shadowBlur = 10 * devicePixelRatio;
+      ctx.shadowOffsetY = 4 * devicePixelRatio;
+      ctx.clip(path);
+      ctx.drawImage(sourceLayer, piece.x - piece.sx, piece.y - piece.sy);
+      ctx.restore();
+
+      if (!piece.placed && piece.snapPreview) {
+        ctx.save();
+        ctx.strokeStyle = "rgb(96 165 250 / 90%)";
+        ctx.lineWidth = 2.2 * devicePixelRatio;
+        ctx.stroke(path);
+        ctx.restore();
+      }
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(6, 10, 18, 0.6)";
+      ctx.lineWidth = 2.2 * devicePixelRatio;
+      ctx.stroke(path);
+      ctx.restore();
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.38)";
+      ctx.lineWidth = 1.1 * devicePixelRatio;
+      ctx.stroke(path);
+      ctx.restore();
+
+      ctx.save();
+      ctx.globalCompositeOperation = "source-atop";
+      const grad = ctx.createLinearGradient(piece.x, piece.y, piece.x, piece.y + piece.sh);
+      grad.addColorStop(0, "rgb(255 255 255 / 11%)");
+      grad.addColorStop(0.42, "rgb(255 255 255 / 0%)");
+      grad.addColorStop(1, "rgb(2 6 23 / 10%)");
+      ctx.fillStyle = grad;
+      ctx.fill(path);
+      ctx.restore();
+    }
+  }
+
+  function drawHud() {
+    ctx.fillStyle = "rgba(2, 6, 23, 0.62)";
+    ctx.fillRect(
+      12 * devicePixelRatio,
+      12 * devicePixelRatio,
+      320 * devicePixelRatio,
+      38 * devicePixelRatio,
+    );
+    ctx.fillStyle = "#bfdbfe";
+    ctx.font = `${14 * devicePixelRatio}px system-ui, sans-serif`;
+    ctx.fillText(
+      solved
+        ? "Solved! Press R to reshuffle."
+        : "Right-click drag puzzle pieces. They snap in when close. Press R to reshuffle.",
+      22 * devicePixelRatio,
+      36 * devicePixelRatio,
+    );
+  }
+
+  function evaluateSolved() {
+    solved = pieces.every((piece) => piece.placed);
+  }
+
+  function solvePuzzle() {
+    drag = null;
+    for (const piece of pieces) {
+      piece.x = piece.tx;
+      piece.y = piece.ty;
+      piece.placed = true;
+      piece.snapPreview = false;
+    }
+    evaluateSolved();
+    canvas.requestPaint();
+  }
+
+  canvas.addEventListener("pointerdown", (event) => {
+    if (event.button !== 2) return;
+    event.preventDefault();
+    const p = toCanvasPoint(event.clientX, event.clientY);
+    const piece = pickPiece(p.x, p.y);
+    if (!piece) return;
+    piece.z = zCounter++;
+    drag = {
+      piece,
+      dx: p.x - piece.x,
+      dy: p.y - piece.y,
+      pointerId: event.pointerId,
+    };
+    canvas.setPointerCapture(event.pointerId);
+  });
+
+  canvas.addEventListener("pointermove", (event) => {
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    const p = toCanvasPoint(event.clientX, event.clientY);
+    const nextX = p.x - drag.dx;
+    const nextY = p.y - drag.dy;
+    const piece = drag.piece;
+    piece.placed = false;
+    const d = Math.hypot(nextX - piece.tx, nextY - piece.ty);
+    if (d < MAGNET_DISTANCE * devicePixelRatio) {
+      piece.x = piece.tx;
+      piece.y = piece.ty;
+      piece.snapPreview = true;
+    } else {
+      piece.x = nextX;
+      piece.y = nextY;
+      piece.snapPreview = false;
+    }
+    canvas.requestPaint();
+  });
+
+  addEventListener("pointerup", (event) => {
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    const piece = drag.piece;
+    const d = Math.hypot(piece.x - piece.tx, piece.y - piece.ty);
+    if (piece.snapPreview || d < SNAP_DISTANCE * devicePixelRatio) {
+      piece.x = piece.tx;
+      piece.y = piece.ty;
+      piece.placed = true;
+    }
+    piece.snapPreview = false;
+    drag = null;
+    evaluateSolved();
+    canvas.requestPaint();
+  });
+
+  addEventListener("keydown", (event) => {
+    if (event.key.toLowerCase() !== "r") return;
+    buildPieces();
+    canvas.requestPaint();
+  });
+
+  if (solveButton instanceof HTMLButtonElement) {
+    solveButton.addEventListener("click", () => {
+      solvePuzzle();
+    });
+  }
+
+  canvas.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+  });
+
+  canvas.onpaint = () => {
+    ctx.reset();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const sourceElement = canvas.firstElementChild;
+    if (!(sourceElement instanceof HTMLElement) || sourceElement.parentElement !== canvas) return;
+
+    ctx.drawElementImage(sourceElement, 0, 0, canvas.width, canvas.height);
+    sourceCtx.clearRect(0, 0, sourceLayer.width, sourceLayer.height);
+    sourceCtx.drawImage(canvas, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (!pieces.length) {
+      buildPieces();
+    }
+
+    drawPuzzleBoard();
+    drawPieces();
+    drawHud();
+  };
+
+  new ResizeObserver(([entry]) => {
+    const box = entry.devicePixelContentBoxSize[0];
+    setBackingSize(box.inlineSize, box.blockSize);
+  }).observe(canvas, { box: "device-pixel-content-box" });
+
+  canvas.requestPaint();
+</script>

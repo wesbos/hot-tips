@@ -1,0 +1,422 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Pixelated website demo</title>
+
+<style>
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at 20% 10%, #1d4ed8 0%, #0f172a 45%, #020617 100%);
+    font-family:
+      Inter,
+      system-ui,
+      -apple-system,
+      Segoe UI,
+      Roboto,
+      sans-serif;
+  }
+
+  canvas {
+    width: min(1000px, 94vw);
+    aspect-ratio: 16 / 10;
+    border-radius: 16px;
+    border: 1px solid rgb(148 163 184 / 35%);
+    box-shadow:
+      0 30px 80px rgb(0 0 0 / 45%),
+      inset 0 0 0 1px rgb(255 255 255 / 6%);
+    overflow: clip;
+  }
+
+  #draw_element {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    gap: 12px;
+    padding: clamp(14px, 2vw, 24px);
+    background:
+      radial-gradient(circle at 90% 10%, rgb(6 182 212 / 22%), transparent 32%),
+      radial-gradient(circle at 12% 80%, rgb(59 130 246 / 18%), transparent 28%),
+      linear-gradient(180deg, #0f172a, #0b1224 36%, #0a1020 100%);
+    color: #e2e8f0;
+  }
+
+  .topbar {
+    display: flex;
+    gap: 8px;
+  }
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #64748b;
+  }
+  .dot:first-child {
+    background: #f87171;
+  }
+  .dot:nth-child(2) {
+    background: #fbbf24;
+  }
+  .dot:nth-child(3) {
+    background: #4ade80;
+  }
+
+  .hero {
+    display: grid;
+    gap: 8px;
+  }
+  h1 {
+    margin: 0;
+    letter-spacing: -0.03em;
+    font-size: clamp(26px, 3.8vw, 46px);
+    line-height: 1.05;
+  }
+  p {
+    margin: 0;
+    max-width: 62ch;
+    color: #cbd5e1;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    align-content: start;
+  }
+  .card {
+    border: 1px solid rgb(148 163 184 / 28%);
+    background: rgb(15 23 42 / 70%);
+    border-radius: 12px;
+    padding: 10px;
+    display: grid;
+    gap: 8px;
+  }
+  .line {
+    height: 10px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgb(148 163 184 / 35%), rgb(148 163 184 / 12%));
+  }
+  .line.wide {
+    width: 85%;
+  }
+  .line.mid {
+    width: 60%;
+  }
+
+  .contact {
+    margin-top: 6px;
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgb(148 163 184 / 30%);
+    background: rgb(15 23 42 / 68%);
+  }
+
+  .contact h2 {
+    margin: 0;
+    font-size: 16px;
+    letter-spacing: -0.01em;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .field {
+    display: grid;
+    gap: 4px;
+  }
+
+  .field.full {
+    grid-column: 1 / -1;
+  }
+
+  .field label {
+    font-size: 12px;
+    color: #cbd5e1;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 8px;
+    border: 1px solid rgb(148 163 184 / 35%);
+    background: rgb(2 6 23 / 72%);
+    color: #e2e8f0;
+    padding: 8px 10px;
+    font: inherit;
+  }
+
+  .field textarea {
+    min-height: 80px;
+    resize: none;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .actions button {
+    border: 1px solid rgb(96 165 250 / 70%);
+    background: linear-gradient(180deg, rgb(59 130 246 / 85%), rgb(37 99 235 / 85%));
+    color: #eff6ff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-weight: 600;
+  }
+
+  .controls {
+    margin-top: 12px;
+    width: min(1000px, 94vw);
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgb(148 163 184 / 35%);
+    background: rgb(15 23 42 / 62%);
+    color: #e2e8f0;
+    display: grid;
+    gap: 8px;
+  }
+
+  .controls-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .controls input[type="range"] {
+    flex: 1;
+  }
+
+  .controls output {
+    min-width: 64px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: #93c5fd;
+  }
+</style>
+
+<canvas id="canvas" layoutsubtree>
+  <div id="draw_element">
+    <div class="topbar">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+
+    <div class="hero">
+      <h1>Pixelated Website</h1>
+      <p>
+        Same UI as the magnifier demo, but rendered through a pixelation pass over the whole canvas.
+      </p>
+    </div>
+
+    <!-- <div class="cards">
+      <article class="card">
+        <div class="line wide"></div>
+        <div class="line"></div>
+        <div class="line mid"></div>
+      </article>
+      <article class="card">
+        <div class="line wide"></div>
+        <div class="line"></div>
+        <div class="line mid"></div>
+      </article>
+      <article class="card">
+        <div class="line wide"></div>
+        <div class="line"></div>
+        <div class="line mid"></div>
+      </article>
+    </div> -->
+
+    <form class="contact" action="#">
+      <h2>Contact us</h2>
+      <div class="form-grid">
+        <div class="field">
+          <label for="name">Name</label>
+          <input id="name" type="text" placeholder="Jane Doe" />
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="jane@example.com" />
+        </div>
+        <div class="field">
+          <label for="topic">Topic</label>
+          <select id="topic">
+            <option>Product question</option>
+            <option>Pricing</option>
+            <option>Support</option>
+            <option>Partnership</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="company">Company</label>
+          <input id="company" type="text" placeholder="Acme Inc." />
+        </div>
+        <div class="field full">
+          <label for="message">Message</label>
+          <textarea id="message" placeholder="Tell us a little about your project."></textarea>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="submit">Send message</button>
+      </div>
+    </form>
+  </div>
+</canvas>
+<div class="controls">
+  <div class="controls-row">
+    <label for="pixel-scale">Pixelation</label>
+    <input id="pixel-scale" type="range" min="0.08" max="0.9" step="0.01" value="0.22" />
+    <output id="pixel-scale-value">0.22x</output>
+  </div>
+</div>
+
+<script>
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  const sharpLayer = document.createElement("canvas");
+  const sharpCtx = sharpLayer.getContext("2d");
+  const pixelLayer = document.createElement("canvas");
+  const pixelCtx = pixelLayer.getContext("2d");
+  const pixelScaleInput = document.getElementById("pixel-scale");
+  const pixelScaleValue = document.getElementById("pixel-scale-value");
+  const controlSelector = "input, select, textarea, button";
+
+  let pixelScale = Number(pixelScaleInput.value);
+  const halftoneSpacing = 6;
+  const halftoneDotRadius = 1.25;
+  const halftoneShadowOffsetX = 2;
+  const halftoneShadowOffsetY = 4;
+
+  function roundedRectPath(ctx2d, x, y, w, h, r) {
+    const radius = Math.min(r, w * 0.5, h * 0.5);
+    ctx2d.beginPath();
+    ctx2d.moveTo(x + radius, y);
+    ctx2d.lineTo(x + w - radius, y);
+    ctx2d.arcTo(x + w, y, x + w, y + radius, radius);
+    ctx2d.lineTo(x + w, y + h - radius);
+    ctx2d.arcTo(x + w, y + h, x + w - radius, y + h, radius);
+    ctx2d.lineTo(x + radius, y + h);
+    ctx2d.arcTo(x, y + h, x, y + h - radius, radius);
+    ctx2d.lineTo(x, y + radius);
+    ctx2d.arcTo(x, y, x + radius, y, radius);
+    ctx2d.closePath();
+  }
+
+  function drawHalftoneShadow(x, y, w, h, radiusPx) {
+    const spacing = halftoneSpacing * devicePixelRatio;
+    const dotRadius = halftoneDotRadius * devicePixelRatio;
+    const ox = halftoneShadowOffsetX * devicePixelRatio;
+    const oy = halftoneShadowOffsetY * devicePixelRatio;
+
+    ctx.save();
+    roundedRectPath(ctx, x + ox, y + oy, w, h, radiusPx);
+    ctx.clip();
+    const yStart = y + oy;
+    const yEnd = y + oy + h;
+
+    for (let py = yStart; py <= yEnd; py += spacing) {
+      const t = (py - yStart) / Math.max(1, h);
+      const rowAlpha = (0.08 + 0.14 * t) * (t < 0.08 ? t / 0.08 : 1);
+      for (let px = x + ox; px <= x + ox + w; px += spacing) {
+        ctx.fillStyle = `rgba(0, 0, 0, ${rowAlpha.toFixed(3)})`;
+        ctx.beginPath();
+        ctx.arc(px, py, dotRadius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    ctx.restore();
+  }
+
+  function drawInputHalftoneShadows(sourceElement) {
+    const canvasRect = canvas.getBoundingClientRect();
+    for (const el of sourceElement.querySelectorAll(controlSelector)) {
+      if (!(el instanceof HTMLElement)) continue;
+      const rect = el.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) continue;
+      const x = (rect.left - canvasRect.left) * devicePixelRatio;
+      const y = (rect.top - canvasRect.top) * devicePixelRatio;
+      const w = rect.width * devicePixelRatio;
+      const h = rect.height * devicePixelRatio;
+      const borderRadius = Number.parseFloat(getComputedStyle(el).borderRadius) || 8;
+      drawHalftoneShadow(x, y, w, h, borderRadius * devicePixelRatio);
+    }
+  }
+
+  function syncPixelScaleLabel() {
+    pixelScaleValue.textContent = `${pixelScale.toFixed(2)}x`;
+  }
+
+  function setBackingSize(width, height) {
+    canvas.width = width;
+    canvas.height = height;
+    sharpLayer.width = width;
+    sharpLayer.height = height;
+    pixelLayer.width = Math.max(1, Math.floor(width * pixelScale));
+    pixelLayer.height = Math.max(1, Math.floor(height * pixelScale));
+    canvas.requestPaint();
+  }
+
+  const rootElement = canvas.firstElementChild;
+  if (rootElement instanceof HTMLElement) {
+    for (const control of rootElement.querySelectorAll(controlSelector)) {
+      control.addEventListener("input", () => canvas.requestPaint());
+      control.addEventListener("change", () => canvas.requestPaint());
+      control.addEventListener("focus", () => canvas.requestPaint());
+      control.addEventListener("blur", () => canvas.requestPaint());
+    }
+  }
+
+  pixelScaleInput.addEventListener("input", () => {
+    pixelScale = Number(pixelScaleInput.value);
+    syncPixelScaleLabel();
+    setBackingSize(canvas.width, canvas.height);
+  });
+
+  canvas.onpaint = () => {
+    ctx.reset();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const sourceElement = canvas.firstElementChild;
+    if (!(sourceElement instanceof HTMLElement) || sourceElement.parentElement !== canvas) return;
+    const syncTransform = ctx.drawElementImage(sourceElement, 0, 0, canvas.width, canvas.height);
+    sourceElement.style.transform = syncTransform.toString();
+    drawInputHalftoneShadows(sourceElement);
+
+    sharpCtx.reset();
+    sharpCtx.clearRect(0, 0, sharpLayer.width, sharpLayer.height);
+    sharpCtx.drawImage(canvas, 0, 0);
+
+    pixelCtx.reset();
+    pixelCtx.imageSmoothingEnabled = false;
+    pixelCtx.clearRect(0, 0, pixelLayer.width, pixelLayer.height);
+    pixelCtx.drawImage(sharpLayer, 0, 0, pixelLayer.width, pixelLayer.height);
+
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(pixelLayer, 0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = true;
+  };
+
+  new ResizeObserver(([entry]) => {
+    const box = entry.devicePixelContentBoxSize[0];
+    setBackingSize(box.inlineSize, box.blockSize);
+  }).observe(canvas, { box: "device-pixel-content-box" });
+
+  syncPixelScaleLabel();
+</script>

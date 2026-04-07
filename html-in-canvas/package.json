@@ -1,0 +1,39 @@
+{
+  "name": "html-in-canvas",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vp dev",
+    "build": "tsc && vp build",
+    "preview": "vp preview"
+  },
+  "dependencies": {
+    "@loaders.gl/core": "^4.3.4",
+    "@loaders.gl/obj": "^4.3.4",
+    "@preact/signals": "^2.5.1",
+    "@typegpu/color": "^0.10.0",
+    "@typegpu/noise": "^0.10.0",
+    "@typegpu/sdf": "^0.10.0",
+    "@typegpu/three": "^0.10.1",
+    "preact": "^10.27.2",
+    "three": "^0.180.0",
+    "typegpu": "^0.10.2",
+    "wgpu-matrix": "^3.4.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.183.1",
+    "@webgpu/types": "^0.1.66",
+    "typescript": "~5.9.3",
+    "unplugin-typegpu": "^0.10.2",
+    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
+    "vite-plus": "latest"
+  },
+  "packageManager": "pnpm@9.10.0",
+  "pnpm": {
+    "overrides": {
+      "vite": "npm:@voidzero-dev/vite-plus-core@latest",
+      "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+    }
+  }
+}

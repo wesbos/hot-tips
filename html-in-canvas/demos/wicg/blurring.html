@@ -1,0 +1,374 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Frosted glass wipe demo</title>
+
+<style>
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    padding: 24px;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at 20% 20%, #312e81 0%, #111827 42%, #020617 100%);
+    font-family:
+      Inter,
+      system-ui,
+      -apple-system,
+      Segoe UI,
+      Roboto,
+      sans-serif;
+  }
+
+  canvas {
+    width: min(900px, 92vw);
+    aspect-ratio: 16 / 10;
+    border: 1px solid color-mix(in srgb, white 22%, transparent);
+    border-radius: 18px;
+    box-shadow:
+      0 24px 60px rgb(0 0 0 / 45%),
+      inset 0 0 0 1px rgb(255 255 255 / 8%);
+    overflow: clip;
+  }
+
+  #draw_element {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    padding: clamp(18px, 2.4vw, 28px);
+    color: white;
+    background:
+      radial-gradient(circle at 18% 20%, rgb(99 102 241 / 70%), transparent 42%),
+      radial-gradient(circle at 80% 12%, rgb(14 165 233 / 48%), transparent 35%),
+      radial-gradient(circle at 65% 78%, rgb(16 185 129 / 35%), transparent 40%),
+      linear-gradient(140deg, #0f172a, #111827 45%, #1f2937);
+  }
+
+  h1 {
+    margin: 0 0 8px;
+    font-size: clamp(28px, 4vw, 46px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+
+  p {
+    margin: 0 0 16px;
+    max-width: 56ch;
+    color: rgb(226 232 240);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .chip {
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    color: #e2e8f0;
+    background: rgb(15 23 42 / 55%);
+    border: 1px solid rgb(148 163 184 / 35%);
+  }
+
+  .controls {
+    margin-top: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid rgb(148 163 184 / 35%);
+    background: rgb(15 23 42 / 55%);
+    color: #e2e8f0;
+    font-size: 13px;
+  }
+
+  .controls select {
+    background: #0f172a;
+    color: #e2e8f0;
+    border: 1px solid rgb(148 163 184 / 45%);
+    border-radius: 6px;
+    padding: 4px 8px;
+  }
+</style>
+
+<canvas id="canvas" layoutsubtree>
+  <div id="draw_element">
+    <h1>Frosted Glass</h1>
+    <p>
+      This demo draws HTML into a canvas using <code>drawElementImage()</code>, then overlays a
+      blurred "frost" layer. Drag your mouse (or finger) to wipe frost away.
+    </p>
+    <div class="chips">
+      <span class="chip">html-in-canvas</span>
+      <span class="chip">drawElementImage</span>
+      <span class="chip">paint event</span>
+      <span class="chip">interactive masking</span>
+    </div>
+  </div>
+</canvas>
+<label class="controls" for="mode">
+  Frost mode
+  <select id="mode">
+    <option value="static">Static noise</option>
+    <option value="animated">Animated noise</option>
+    <option value="hybrid" selected>Hybrid</option>
+  </select>
+</label>
+
+<script>
+  const canvas = document.getElementById("canvas");
+  const drawElement = document.getElementById("draw_element");
+  const ctx = canvas.getContext("2d");
+
+  const sharpLayer = document.createElement("canvas");
+  const blurLayer = document.createElement("canvas");
+  const frostMask = document.createElement("canvas");
+  const blurComposite = document.createElement("canvas");
+
+  const sharpCtx = sharpLayer.getContext("2d");
+  const blurCtx = blurLayer.getContext("2d");
+  const maskCtx = frostMask.getContext("2d");
+  const compositeCtx = blurComposite.getContext("2d");
+
+  let isWiping = false;
+  const wipeRadiusPx = 42;
+  const brushSpacingPx = 10;
+  let lastWipePoint = null;
+  const frostMagnify = 1.1;
+  const frostDistortX = 6;
+  const frostDistortY = 2;
+  const modeSelect = document.getElementById("mode");
+  let distortionMode = "hybrid";
+  let staticStripOffsets = [];
+
+  function createRng(seed) {
+    let t = seed >>> 0;
+    return () => {
+      t += 0x6d2b79f5;
+      let x = Math.imul(t ^ (t >>> 15), t | 1);
+      x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+      return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function ensureStaticOffsets(height, stripHeight) {
+    const strips = Math.ceil(height / stripHeight);
+    if (staticStripOffsets.length === strips) return;
+
+    const rand = createRng(0x5f3759df);
+    staticStripOffsets = Array.from({ length: strips }, () => ({
+      x: (rand() * 2 - 1) * frostDistortX * 1.2,
+      y: (rand() * 2 - 1) * frostDistortY * 1.2,
+    }));
+  }
+
+  function setBackingSize(width, height) {
+    for (const c of [canvas, sharpLayer, blurLayer, frostMask, blurComposite]) {
+      c.width = width;
+      c.height = height;
+    }
+    resetFrost();
+    canvas.requestPaint();
+  }
+
+  function resetFrost() {
+    maskCtx.globalCompositeOperation = "source-over";
+    maskCtx.fillStyle = "rgba(255,255,255,1)";
+    maskCtx.fillRect(0, 0, frostMask.width, frostMask.height);
+  }
+
+  function stampWipe(x, y) {
+    maskCtx.globalCompositeOperation = "destination-out";
+    const radius = wipeRadiusPx * devicePixelRatio;
+    const gradient = maskCtx.createRadialGradient(x, y, 0, x, y, radius);
+    gradient.addColorStop(0, "rgba(0,0,0,0.92)");
+    gradient.addColorStop(0.75, "rgba(0,0,0,0.42)");
+    gradient.addColorStop(1, "rgba(0,0,0,0)");
+    maskCtx.fillStyle = gradient;
+    maskCtx.beginPath();
+    maskCtx.arc(x, y, radius, 0, Math.PI * 2);
+    maskCtx.fill();
+  }
+
+  function toCanvasPoint(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (clientX - rect.left) * devicePixelRatio,
+      y: (clientY - rect.top) * devicePixelRatio,
+    };
+  }
+
+  function wipeAtClientPoint(clientX, clientY) {
+    const point = toCanvasPoint(clientX, clientY);
+    if (!lastWipePoint) {
+      stampWipe(point.x, point.y);
+      lastWipePoint = point;
+      canvas.requestPaint();
+      return;
+    }
+
+    const dx = point.x - lastWipePoint.x;
+    const dy = point.y - lastWipePoint.y;
+    const distance = Math.hypot(dx, dy);
+    const spacing = brushSpacingPx * devicePixelRatio;
+    const steps = Math.max(1, Math.ceil(distance / spacing));
+
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      const x = lastWipePoint.x + dx * t;
+      const y = lastWipePoint.y + dy * t;
+      stampWipe(x, y);
+    }
+    lastWipePoint = point;
+
+    canvas.requestPaint();
+  }
+
+  function drawDistortedMagnifiedFrostSource(timeMs) {
+    const w = sharpLayer.width;
+    const h = sharpLayer.height;
+    const srcW = w / frostMagnify;
+    const srcH = h / frostMagnify;
+    const srcBaseX = (w - srcW) / 2;
+    const srcBaseY = (h - srcH) / 2;
+    const stripHeight = Math.max(8, Math.floor(16 * devicePixelRatio));
+    ensureStaticOffsets(h, stripHeight);
+    const phase = timeMs * 0.0011;
+
+    blurCtx.reset();
+    blurCtx.clearRect(0, 0, w, h);
+
+    for (let y = 0; y < h; y += stripHeight) {
+      const dh = Math.min(stripHeight, h - y);
+      const stripIndex = Math.floor(y / stripHeight);
+      const staticOffset = staticStripOffsets[stripIndex] ?? { x: 0, y: 0 };
+      const yNorm = y / h;
+      const animatedOffsetX = Math.sin(yNorm * 26 + phase) * frostDistortX * devicePixelRatio;
+      const animatedOffsetY =
+        Math.cos(yNorm * 19 + phase * 1.23) * frostDistortY * devicePixelRatio;
+      const staticOffsetX = staticOffset.x * devicePixelRatio;
+      const staticOffsetY = staticOffset.y * devicePixelRatio;
+
+      let offsetX = 0;
+      let offsetY = 0;
+      if (distortionMode === "static") {
+        offsetX = staticOffsetX;
+        offsetY = staticOffsetY;
+      } else if (distortionMode === "animated") {
+        offsetX = animatedOffsetX;
+        offsetY = animatedOffsetY;
+      } else {
+        offsetX = animatedOffsetX + staticOffsetX;
+        offsetY = animatedOffsetY + staticOffsetY;
+      }
+
+      const srcY = srcBaseY + yNorm * srcH + offsetY;
+      const srcHStrip = (dh / h) * srcH;
+
+      blurCtx.drawImage(sharpLayer, srcBaseX + offsetX, srcY, srcW, srcHStrip, 0, y, w, dh);
+    }
+
+    blurCtx.globalAlpha =
+      distortionMode === "animated" ? 0.2 : distortionMode === "static" ? 0.14 : 0.25;
+    blurCtx.drawImage(
+      sharpLayer,
+      srcBaseX + Math.sin(phase * 1.8) * 3 * devicePixelRatio,
+      srcBaseY + Math.cos(phase * 1.4) * 2 * devicePixelRatio,
+      srcW,
+      srcH,
+      0,
+      0,
+      w,
+      h,
+    );
+    blurCtx.globalAlpha = 1;
+  }
+
+  modeSelect.addEventListener("change", () => {
+    distortionMode = modeSelect.value;
+    canvas.requestPaint();
+  });
+
+  canvas.addEventListener("pointerdown", (event) => {
+    isWiping = true;
+    lastWipePoint = null;
+    canvas.setPointerCapture(event.pointerId);
+    wipeAtClientPoint(event.clientX, event.clientY);
+  });
+  canvas.addEventListener("pointermove", (event) => {
+    if (!isWiping) return;
+    wipeAtClientPoint(event.clientX, event.clientY);
+  });
+  addEventListener("pointerup", () => {
+    isWiping = false;
+    lastWipePoint = null;
+  });
+
+  canvas.onpaint = () => {
+    ctx.reset();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const sourceElement = canvas.firstElementChild;
+    if (!(sourceElement instanceof HTMLElement) || sourceElement.parentElement !== canvas) {
+      return;
+    }
+    const syncTransform = ctx.drawElementImage(sourceElement, 0, 0, canvas.width, canvas.height);
+    sourceElement.style.transform = syncTransform.toString();
+
+    sharpCtx.reset();
+    sharpCtx.clearRect(0, 0, sharpLayer.width, sharpLayer.height);
+    sharpCtx.drawImage(canvas, 0, 0);
+
+    drawDistortedMagnifiedFrostSource(performance.now());
+
+    compositeCtx.reset();
+    compositeCtx.clearRect(0, 0, blurComposite.width, blurComposite.height);
+    compositeCtx.filter = "blur(14px) saturate(1.2)";
+    compositeCtx.drawImage(blurLayer, 0, 0);
+    compositeCtx.filter = "none";
+    compositeCtx.globalCompositeOperation = "destination-in";
+    compositeCtx.drawImage(frostMask, 0, 0);
+    compositeCtx.globalCompositeOperation = "source-atop";
+    compositeCtx.fillStyle = "rgba(255,255,255,0.18)";
+    compositeCtx.fillRect(0, 0, blurComposite.width, blurComposite.height);
+    compositeCtx.globalCompositeOperation = "source-over";
+
+    ctx.drawImage(sharpLayer, 0, 0);
+    ctx.drawImage(blurComposite, 0, 0);
+  };
+
+  new ResizeObserver(([entry]) => {
+    const box = entry.devicePixelContentBoxSize[0];
+    setBackingSize(box.inlineSize, box.blockSize);
+  }).observe(canvas, { box: "device-pixel-content-box" });
+
+  addEventListener("keydown", (event) => {
+    if (event.key === "1") {
+      distortionMode = "static";
+      modeSelect.value = "static";
+      canvas.requestPaint();
+      return;
+    }
+    if (event.key === "2") {
+      distortionMode = "animated";
+      modeSelect.value = "animated";
+      canvas.requestPaint();
+      return;
+    }
+    if (event.key === "3") {
+      distortionMode = "hybrid";
+      modeSelect.value = "hybrid";
+      canvas.requestPaint();
+      return;
+    }
+    if (event.key.toLowerCase() !== "r") return;
+    resetFrost();
+    canvas.requestPaint();
+  });
+</script>

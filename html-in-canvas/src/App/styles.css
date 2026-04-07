@@ -1,0 +1,66 @@
+canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
+
+.canvas-content {
+  --size: 512px;
+  width: var(--size);
+  height: var(--size);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: #0a0a0a;
+  padding: 70px;
+}
+
+.button-row {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 8px;
+  align-items: start;
+
+  a {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 12px;
+    border: 1px solid #444;
+    border-radius: 6px;
+    background: #1e1e1e;
+    color: #e0e0e0;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    text-wrap: nowrap;
+    transition:
+      background 0.15s,
+      border-color 0.15s,
+      color 0.15s;
+
+    &:hover {
+      background: #7c3aed;
+      border-color: #7c3aed;
+      color: #fff;
+    }
+  }
+}
+
+.range-row {
+  display: grid;
+  margin: 0 50px;
+}
+
+.error-banner {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #b91c1c;
+  border-radius: 8px;
+  background: #2a1111;
+  color: #fecaca;
+}
+
+select,
+select::picker(select) {
+  appearance: base-select;
+}

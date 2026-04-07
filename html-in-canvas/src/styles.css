@@ -1,0 +1,29 @@
+html {
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+  background: black;
+  color: white;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: #a78bfa;
+  text-decoration-color: color-mix(in srgb, #a78bfa 40%, transparent);
+  text-underline-offset: 3px;
+  transition:
+    color 0.15s,
+    text-decoration-color 0.15s;
+
+  &:hover {
+    color: #c4b5fd;
+    text-decoration-color: #c4b5fd;
+  }
+
+  &:visited {
+    color: #818cf8;
+    text-decoration-color: color-mix(in srgb, #818cf8 40%, transparent);
+  }
+}
