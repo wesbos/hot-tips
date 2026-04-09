@@ -199,6 +199,11 @@
 
   <div class="panel-section">Brush</div>
   <div class="panel-row">
+    <label>Size</label>
+    <input type="range" id="s-size" min="40" max="500" value="220" />
+    <span class="val" id="v-size">220</span>
+  </div>
+  <div class="panel-row">
     <label>Width</label>
     <input type="range" id="s-width" min="40" max="500" value="220" />
     <span class="val" id="v-width">220</span>
@@ -239,7 +244,7 @@
       </div>
       <div class="panel-row">
         <label>Bias</label>
-        <input type="range" id="s-bias" min="0" max="100" value="0" />
+        <input type="range" id="s-bias" min="0" max="500" value="0" />
         <span class="val" id="v-bias">0%</span>
       </div>
     </div>
@@ -266,11 +271,11 @@
   new ResizeObserver(fitText).observe(content);
 
   const snap = document.createElement("canvas");
-  const snapCtx = snap.getContext("2d");
+  const snapCtx = snap.getContext("2d", { willReadFrequently: true });
 
   let mouseX = -9999, mouseY = -9999;
   let mode = "edit";
-  const stamps = [];
+  const stamps = []; // stores { x, y } positions only
   let pendingStamp = null;
 
   const P = {
@@ -371,8 +376,8 @@
         const str2 = (1 - Math.sqrt(eDist)) ** 2;
         const nA = sampleField(noiseFieldA, px, py);
         const nB = sampleField(noiseFieldB, px, py);
-        const dispX = ((nA.nx * 0.7 + nB.nx * 0.3) * (1 - biasAmt) + biasDx) * noiseAmt * str2;
-        const dispY = ((nA.ny * 0.7 + nB.ny * 0.3) * (1 - biasAmt) + biasDy) * noiseAmt * str2;
+        const dispX = (nA.nx * 0.7 + nB.nx * 0.3 + biasDx) * noiseAmt * str2;
+        const dispY = (nA.ny * 0.7 + nB.ny * 0.3 + biasDy) * noiseAmt * str2;
 
         let rA = 0, gA = 0, bA = 0, aA = 0, tW = 0;
         for (let s = 0; s < samples; s++) {
@@ -415,6 +420,7 @@
   });
 
   canvas.onpaint = () => {
+    const t0 = performance.now();
     const w = canvas.width, h = canvas.height;
     if (!w || !h) return;
 
@@ -426,33 +432,31 @@
       content.style.transform = transform.toString();
     } catch { return; }
 
-    for (const stamp of stamps) {
-      ctx.putImageData(stamp.data, stamp.left, stamp.top);
-    }
-
     if (pendingStamp) {
-      snapCtx.clearRect(0, 0, w, h);
-      snapCtx.drawImage(canvas, 0, 0);
-      const src = snapCtx.getImageData(0, 0, w, h);
-      const b = regionBounds(pendingStamp.x, pendingStamp.y, w, h);
-      if (b.rw > 0 && b.rh > 0) {
-        const patch = distortRegion(src, w, b.left, b.top, b.rw, b.rh, pendingStamp.x, pendingStamp.y);
-        stamps.push({ left: b.left, top: b.top, data: patch });
-        ctx.putImageData(patch, b.left, b.top);
-      }
+      stamps.push({ x: pendingStamp.x, y: pendingStamp.y });
       pendingStamp = null;
     }
 
+    const allPoints = [...stamps];
     if (mode === "edit" && mouseX > -9000) {
+      allPoints.push({ x: mouseX, y: mouseY });
+    }
+
+    if (allPoints.length > 0) {
       snapCtx.clearRect(0, 0, w, h);
       snapCtx.drawImage(canvas, 0, 0);
       const src = snapCtx.getImageData(0, 0, w, h);
-      const b = regionBounds(mouseX, mouseY, w, h);
-      if (b.rw > 0 && b.rh > 0) {
-        const result = distortRegion(src, w, b.left, b.top, b.rw, b.rh, mouseX, mouseY);
-        ctx.putImageData(result, b.left, b.top);
-      }
 
+      for (const pt of allPoints) {
+        const b = regionBounds(pt.x, pt.y, w, h);
+        if (b.rw > 0 && b.rh > 0) {
+          const patch = distortRegion(src, w, b.left, b.top, b.rw, b.rh, pt.x, pt.y);
+          ctx.putImageData(patch, b.left, b.top);
+        }
+      }
+    }
+
+    if (mode === "edit" && mouseX > -9000) {
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(devicePixelRatio, devicePixelRatio);
@@ -463,6 +467,8 @@
       ctx.stroke();
       ctx.restore();
     }
+
+    console.log(`paint: ${(performance.now() - t0).toFixed(2)}ms`);
   };
 
   new ResizeObserver(([entry]) => {
@@ -497,6 +503,24 @@
 
   wire("s-width",   "v-width",   "radiusX",  v => v);
   wire("s-height",  "v-height",  "radiusY",  v => v);
+
+  (function wireSize() {
+    const sl = document.getElementById("s-size");
+    const vl = document.getElementById("v-size");
+    const slW = document.getElementById("s-width");
+    const vlW = document.getElementById("v-width");
+    const slH = document.getElementById("s-height");
+    const vlH = document.getElementById("v-height");
+    sl.addEventListener("input", () => {
+      const v = parseFloat(sl.value);
+      P.radiusX = v;
+      P.radiusY = v;
+      vl.textContent = v;
+      slW.value = v; vlW.textContent = v;
+      slH.value = v; vlH.textContent = v;
+      noiseFieldA = noiseFieldB = null; lastNW = lastNH = 0;
+    });
+  })();
   wire("s-spread",  "v-spread",  "spread",   v => v);
   wire("s-grain",   "v-grain",   "grain",    v => v);
   wire("s-samples", "v-samples", "samples",  v => v);
