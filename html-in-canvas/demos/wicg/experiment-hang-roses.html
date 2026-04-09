@@ -250,10 +250,17 @@
     </div>
   </div>
 
+  <div class="panel-row">
+    <label style="width:auto">
+      <input type="checkbox" id="cb-update-all" /> Update all
+    </label>
+  </div>
+
   <button class="btn-reset" id="btn-reset" type="button">Clear stamps</button>
 </div>
 
 <script>
+  // ─── Main canvas: 2D + layoutsubtree (proven to work) ───
   const canvas = document.querySelector("canvas[layoutsubtree]");
   const ctx = canvas.getContext("2d");
   const content = document.getElementById("content");
@@ -270,12 +277,170 @@
   fitText();
   new ResizeObserver(fitText).observe(content);
 
-  const snap = document.createElement("canvas");
-  const snapCtx = snap.getContext("2d", { willReadFrequently: true });
+  // ─── OffscreenCanvas: WebGL2 for the shader (no DOM, no layoutsubtree) ───
+  const offscreen = new OffscreenCanvas(300, 150);
+  const gl = offscreen.getContext("webgl2", { preserveDrawingBuffer: true });
 
+  const VS = `#version 300 es
+in vec2 aPos;
+void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+`;
+
+  const FS = `#version 300 es
+precision highp float;
+
+uniform sampler2D uSource;
+uniform vec2 uResolution;
+uniform int uStampCount;
+// Per-stamp: xy=position, zw=radius
+uniform vec4 uStampPosRad[64];
+// Per-stamp: x=spread, y=grain, z=angle, w=bias
+uniform vec4 uStampParams[64];
+// Per-stamp samples (as float)
+uniform float uStampSamples[64];
+
+uniform vec2 uMouse;
+uniform vec2 uCursorRadius;
+
+out vec4 fragColor;
+
+vec3 h3(vec3 p) {
+  p = fract(p * vec3(0.1031, 0.1030, 0.0973));
+  p += dot(p, p.yzx + 33.33);
+  return p;
+}
+
+vec2 hash22(vec2 p) {
+  vec3 o = h3(vec3(p.xyx));
+  return fract(vec2((o.x + o.y) * o.z, (o.x + o.z) * o.y)) * 2.0 - 1.0;
+}
+
+vec2 valueNoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(
+    mix(hash22(i), hash22(i + vec2(1, 0)), u.x),
+    mix(hash22(i + vec2(0, 1)), hash22(i + vec2(1, 1)), u.x),
+    u.y
+  );
+}
+
+void main() {
+  vec2 pixel = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
+  vec2 uv = pixel / uResolution;
+
+  vec2 totalDisp = vec2(0.0);
+  float maxStr = 0.0;
+  float bestSamples = 6.0;
+
+  for (int i = 0; i < 64; i++) {
+    if (i >= uStampCount) break;
+    vec2 center = uStampPosRad[i].xy;
+    vec2 radius = uStampPosRad[i].zw;
+    float spread = uStampParams[i].x;
+    float grain  = uStampParams[i].y;
+    float angle  = uStampParams[i].z;
+    float bias   = uStampParams[i].w;
+
+    vec2 norm = (pixel - center) / radius;
+    float eDist = dot(norm, norm);
+    if (eDist >= 1.0) continue;
+
+    float str = pow(1.0 - sqrt(eDist), 2.0);
+
+    float biasAmt = bias / 100.0;
+    float biasRad = angle * 3.14159265 / 180.0;
+    vec2 biasDir = vec2(cos(biasRad), sin(biasRad)) * biasAmt;
+
+    vec2 nc = pixel / grain;
+    vec2 nA = valueNoise(nc);
+    vec2 nB = valueNoise(nc + 73.156);
+
+    totalDisp += (nA * 0.7 + nB * 0.3 + biasDir) * spread * str;
+    if (str > maxStr) {
+      maxStr = str;
+      bestSamples = uStampSamples[i];
+    }
+  }
+
+  vec4 color;
+  if (maxStr > 0.0) {
+    color = vec4(0.0);
+    float tw = 0.0;
+    int samples = int(bestSamples);
+    float invSm1 = samples > 1 ? 1.0 / float(samples - 1) : 1.0;
+
+    for (int s = 0; s < 12; s++) {
+      if (s >= samples) break;
+      float t = float(s) * invSm1;
+      vec2 sp = pixel + totalDisp * t;
+      vec2 sUV = clamp(sp / uResolution, vec2(0), vec2(1));
+      float w = 1.0 - t * 0.6;
+      color += texture(uSource, sUV) * w;
+      tw += w;
+    }
+    color /= tw;
+  } else {
+    color = texture(uSource, uv);
+  }
+
+  if (uMouse.x > -9000.0) {
+    vec2 norm = (pixel - uMouse) / uCursorRadius;
+    float d = length(norm);
+    float fw = fwidth(d);
+    float ring = smoothstep(1.0 - fw * 1.5, 1.0, d)
+               * (1.0 - smoothstep(1.0, 1.0 + fw * 1.5, d));
+    color = mix(color, vec4(0, 0, 0, 1), ring * 0.25);
+  }
+
+  fragColor = color;
+}
+`;
+
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
+      console.error("Shader compile error:", gl.getShaderInfoLog(s));
+    return s;
+  }
+
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS))
+    console.error("Program link error:", gl.getProgramInfoLog(prog));
+
+  const loc = {};
+  for (const name of [
+    "uSource", "uResolution", "uStampCount",
+    "uStampPosRad", "uStampParams", "uStampSamples",
+    "uMouse", "uCursorRadius",
+  ]) loc[name] = gl.getUniformLocation(prog, name);
+
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, "aPos");
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+  // ─── State ───
   let mouseX = -9999, mouseY = -9999;
   let mode = "edit";
-  const stamps = []; // stores { x, y } positions only
+  const stamps = [];
   let pendingStamp = null;
 
   const P = {
@@ -284,125 +449,70 @@
     angle: 0, bias: 0,
   };
 
-  let noiseSeed = 0, noiseFieldA = null, noiseFieldB = null;
-  let lastNW = 0, lastNH = 0;
+  const posRadBuf = new Float32Array(256);
+  const paramsBuf = new Float32Array(256);
+  const samplesBuf = new Float32Array(64);
 
-  function rng() {
-    noiseSeed = (noiseSeed * 1664525 + 1013904223) >>> 0;
-    return (noiseSeed >>> 16) / 65536;
-  }
-
-  function makeNoiseField(rw, rh, seed) {
-    const cs = P.grain;
-    const cols = Math.ceil(rw / cs) + 2;
-    const rows = Math.ceil(rh / cs) + 2;
-    noiseSeed = seed >>> 0;
-    const field = new Float32Array(cols * rows * 2);
-    for (let i = 0; i < field.length; i++) field[i] = (rng() - 0.5) * 2;
-    return { field, cols, rows, cellSize: cs };
-  }
-
-  function sampleField(nd, px, py) {
-    const gx = px / nd.cellSize, gy = py / nd.cellSize;
-    const ix = gx | 0, iy = gy | 0;
-    const fx = gx - ix, fy = gy - iy, ify = 1 - fy;
-    const mx = nd.cols - 1, my = nd.rows - 1, c = nd.cols, f = nd.field;
-    const r0 = Math.min(iy, my) * c, r1 = Math.min(iy + 1, my) * c;
-    const c0 = Math.min(ix, mx), c1 = Math.min(ix + 1, mx);
-    const i00 = (r0 + c0) << 1, i10 = (r0 + c1) << 1;
-    const i01 = (r1 + c0) << 1, i11 = (r1 + c1) << 1;
+  function stampEntry(s) {
+    const dpr = devicePixelRatio;
     return {
-      nx: (f[i00] + (f[i10] - f[i00]) * fx) * ify + (f[i01] + (f[i11] - f[i01]) * fx) * fy,
-      ny: (f[i00+1] + (f[i10+1] - f[i00+1]) * fx) * ify + (f[i01+1] + (f[i11+1] - f[i01+1]) * fx) * fy,
+      posRad: [s.x, s.y, s.radiusX * dpr, s.radiusY * dpr],
+      params: [s.spread * dpr, s.grain, s.angle, s.bias],
+      samples: s.samples,
     };
   }
 
-  function ensureNoise(rw, rh) {
-    if (noiseFieldA && rw === lastNW && rh === lastNH) return;
-    noiseFieldA = makeNoiseField(rw, rh, 0x5f3759df);
-    noiseFieldB = makeNoiseField(rw, rh, 0xdeadbeef);
-    lastNW = rw; lastNH = rh;
-  }
-
-  function regionBounds(cx, cy, w, h) {
-    const rxPx = P.radiusX * devicePixelRatio;
-    const ryPx = P.radiusY * devicePixelRatio;
-    const pad = Math.ceil(P.spread * devicePixelRatio) + 2;
-    return {
-      left: Math.max(0, Math.floor(cx - rxPx - pad)),
-      top:  Math.max(0, Math.floor(cy - ryPx - pad)),
-      rw:   Math.min(w, Math.ceil(cx + rxPx + pad)) - Math.max(0, Math.floor(cx - rxPx - pad)),
-      rh:   Math.min(h, Math.ceil(cy + ryPx + pad)) - Math.max(0, Math.floor(cy - ryPx - pad)),
-    };
-  }
-
-  function distortRegion(src, srcW, left, top_, rw, rh, cx, cy) {
-    const out = new ImageData(rw, rh);
-    const od = out.data, sd = src.data;
-
-    for (let py = 0; py < rh; py++) {
-      const srcRow = (top_ + py) * srcW;
-      const outRow = py * rw;
-      for (let px = 0; px < rw; px++) {
-        const si = (srcRow + left + px) << 2;
-        const di = (outRow + px) << 2;
-        od[di] = sd[si]; od[di+1] = sd[si+1]; od[di+2] = sd[si+2]; od[di+3] = sd[si+3];
-      }
+  // ─── GL render on OffscreenCanvas ───
+  function renderGL(w, h) {
+    if (offscreen.width !== w || offscreen.height !== h) {
+      offscreen.width = w;
+      offscreen.height = h;
     }
 
-    const rxPx = P.radiusX * devicePixelRatio;
-    const ryPx = P.radiusY * devicePixelRatio;
-    const noiseAmt = P.spread * devicePixelRatio;
-    const samples = P.samples;
-    const invSm1 = 1 / (samples - 1);
-    const biasAmt = P.bias / 100;
-    const biasRad = P.angle * Math.PI / 180;
-    const biasDx = Math.cos(biasRad) * biasAmt;
-    const biasDy = Math.sin(biasRad) * biasAmt;
-    const srcH = src.height;
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
 
-    ensureNoise(rw, rh);
+    gl.viewport(0, 0, w, h);
+    gl.useProgram(prog);
+    gl.bindVertexArray(vao);
 
-    for (let py = 0; py < rh; py++) {
-      const absY = top_ + py;
-      const nyNorm = (absY - cy) / ryPx;
+    gl.uniform1i(loc.uSource, 0);
+    gl.uniform2f(loc.uResolution, w, h);
 
-      for (let px = 0; px < rw; px++) {
-        const absX = left + px;
-        const nxNorm = (absX - cx) / rxPx;
-        const eDist = nxNorm * nxNorm + nyNorm * nyNorm;
-        if (eDist > 1) continue;
-
-        const str2 = (1 - Math.sqrt(eDist)) ** 2;
-        const nA = sampleField(noiseFieldA, px, py);
-        const nB = sampleField(noiseFieldB, px, py);
-        const dispX = (nA.nx * 0.7 + nB.nx * 0.3 + biasDx) * noiseAmt * str2;
-        const dispY = (nA.ny * 0.7 + nB.ny * 0.3 + biasDy) * noiseAmt * str2;
-
-        let rA = 0, gA = 0, bA = 0, aA = 0, tW = 0;
-        for (let s = 0; s < samples; s++) {
-          const t = s * invSm1;
-          let sx = (absX + dispX * t) | 0;
-          let sy = (absY + dispY * t) | 0;
-          if (sx < 0) sx = 0; else if (sx >= srcW) sx = srcW - 1;
-          if (sy < 0) sy = 0; else if (sy >= srcH) sy = srcH - 1;
-          const w = 1 - t * 0.6;
-          const si = (sy * srcW + sx) << 2;
-          rA += sd[si] * w; gA += sd[si+1] * w; bA += sd[si+2] * w; aA += sd[si+3] * w;
-          tW += w;
-        }
-
-        const inv = 1 / tW;
-        const oi = (py * rw + px) << 2;
-        od[oi] = (rA * inv + 0.5) | 0;
-        od[oi+1] = (gA * inv + 0.5) | 0;
-        od[oi+2] = (bA * inv + 0.5) | 0;
-        od[oi+3] = (aA * inv + 0.5) | 0;
-      }
+    const allStamps = [...stamps];
+    if (mode === "edit" && mouseX > -9000) {
+      allStamps.push({
+        x: mouseX, y: mouseY,
+        radiusX: P.radiusX, radiusY: P.radiusY,
+        spread: P.spread, grain: P.grain, samples: P.samples,
+        angle: P.angle, bias: P.bias,
+      });
     }
-    return out;
+
+    const count = Math.min(allStamps.length, 64);
+    for (let i = 0; i < count; i++) {
+      const e = stampEntry(allStamps[i]);
+      posRadBuf.set(e.posRad, i * 4);
+      paramsBuf.set(e.params, i * 4);
+      samplesBuf[i] = e.samples;
+    }
+    gl.uniform4fv(loc.uStampPosRad, posRadBuf);
+    gl.uniform4fv(loc.uStampParams, paramsBuf);
+    gl.uniform1fv(loc.uStampSamples, samplesBuf);
+    gl.uniform1i(loc.uStampCount, count);
+
+    const dpr = devicePixelRatio;
+    if (mode === "edit" && mouseX > -9000) {
+      gl.uniform2f(loc.uMouse, mouseX, mouseY);
+    } else {
+      gl.uniform2f(loc.uMouse, -99999, -99999);
+    }
+    gl.uniform2f(loc.uCursorRadius, P.radiusX * dpr, P.radiusY * dpr);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
+  // ─── Pointer events ───
   canvas.addEventListener("pointermove", (e) => {
     const rect = canvas.getBoundingClientRect();
     mouseX = (e.clientX - rect.left) * devicePixelRatio;
@@ -416,9 +526,13 @@
     pendingStamp = {
       x: (e.clientX - rect.left) * devicePixelRatio,
       y: (e.clientY - rect.top) * devicePixelRatio,
+      radiusX: P.radiusX, radiusY: P.radiusY,
+      spread: P.spread, grain: P.grain, samples: P.samples,
+      angle: P.angle, bias: P.bias,
     };
   });
 
+  // ─── Paint: 2D drawElementImage → GL shader on OffscreenCanvas → drawImage back ───
   canvas.onpaint = () => {
     const t0 = performance.now();
     const w = canvas.width, h = canvas.height;
@@ -433,52 +547,24 @@
     } catch { return; }
 
     if (pendingStamp) {
-      stamps.push({ x: pendingStamp.x, y: pendingStamp.y });
+      stamps.push(pendingStamp);
       pendingStamp = null;
     }
 
-    const allPoints = [...stamps];
-    if (mode === "edit" && mouseX > -9000) {
-      allPoints.push({ x: mouseX, y: mouseY });
-    }
-
-    if (allPoints.length > 0) {
-      snapCtx.clearRect(0, 0, w, h);
-      snapCtx.drawImage(canvas, 0, 0);
-      const src = snapCtx.getImageData(0, 0, w, h);
-
-      for (const pt of allPoints) {
-        const b = regionBounds(pt.x, pt.y, w, h);
-        if (b.rw > 0 && b.rh > 0) {
-          const patch = distortRegion(src, w, b.left, b.top, b.rw, b.rh, pt.x, pt.y);
-          ctx.putImageData(patch, b.left, b.top);
-        }
-      }
-    }
-
-    if (mode === "edit" && mouseX > -9000) {
-      ctx.save();
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.scale(devicePixelRatio, devicePixelRatio);
-      ctx.beginPath();
-      ctx.ellipse(mouseX / devicePixelRatio, mouseY / devicePixelRatio, P.radiusX, P.radiusY, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(0,0,0,0.25)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.restore();
+    const hasWork = stamps.length > 0 || (mode === "edit" && mouseX > -9000);
+    if (hasWork) {
+      renderGL(w, h);
+      ctx.drawImage(offscreen, 0, 0);
     }
 
     console.log(`paint: ${(performance.now() - t0).toFixed(2)}ms`);
   };
 
+  // ─── Resize ───
   new ResizeObserver(([entry]) => {
     const box = entry.devicePixelContentBoxSize[0];
     canvas.width = box.inlineSize;
     canvas.height = box.blockSize;
-    snap.width = box.inlineSize;
-    snap.height = box.blockSize;
-    noiseFieldA = noiseFieldB = null;
-    lastNW = lastNH = 0;
     canvas.requestPaint();
   }).observe(canvas, { box: "device-pixel-content-box" });
 
@@ -488,7 +574,6 @@
   })();
 
   // ─── UI ───
-
   function wire(id, valId, prop, fmt) {
     const sl = document.getElementById(id);
     const vl = document.getElementById(valId);
@@ -497,7 +582,7 @@
     sl.addEventListener("input", () => {
       P[prop] = parseFloat(sl.value);
       vl.textContent = fmt(P[prop]);
-      noiseFieldA = noiseFieldB = null; lastNW = lastNH = 0;
+      syncAllStamps();
     });
   }
 
@@ -518,7 +603,7 @@
       vl.textContent = v;
       slW.value = v; vlW.textContent = v;
       slH.value = v; vlH.textContent = v;
-      noiseFieldA = noiseFieldB = null; lastNW = lastNH = 0;
+      syncAllStamps();
     });
   })();
   wire("s-spread",  "v-spread",  "spread",   v => v);
@@ -526,6 +611,17 @@
   wire("s-samples", "v-samples", "samples",  v => v);
   wire("s-angle",   "v-angle",   "angle",    v => v + "°");
   wire("s-bias",    "v-bias",    "bias",     v => v + "%");
+
+  const cbUpdateAll = document.getElementById("cb-update-all");
+
+  function syncAllStamps() {
+    if (!cbUpdateAll.checked) return;
+    for (const s of stamps) {
+      s.radiusX = P.radiusX; s.radiusY = P.radiusY;
+      s.spread = P.spread; s.grain = P.grain; s.samples = P.samples;
+      s.angle = P.angle; s.bias = P.bias;
+    }
+  }
 
   document.getElementById("btn-reset").addEventListener("click", () => { stamps.length = 0; pendingStamp = null; });
 
@@ -540,6 +636,7 @@
   btnEdit.addEventListener("click", () => setMode("edit"));
   btnView.addEventListener("click", () => setMode("view"));
 
+  // ─── Direction ring widget ───
   const dirCanvas = document.getElementById("dir-canvas");
   const dirCtx = dirCanvas.getContext("2d");
 
@@ -581,5 +678,6 @@
     document.getElementById("s-bias").value = P.bias;
     document.getElementById("v-bias").textContent = P.bias + "%";
     drawDirRing();
+    syncAllStamps();
   }
 </script>
