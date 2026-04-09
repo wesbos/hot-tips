@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>Bad TV Shader — html-in-canvas + WebGL</title>
+
+<style>
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: #000;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  canvas {
+    width: min(900px, 92vw);
+    aspect-ratio: 16 / 10;
+    border-radius: 18px;
+    border: 12px solid #111;
+    box-shadow:
+      0 0 0 3px #2a2a2a,
+      0 0 0 6px #111,
+      0 0 80px rgba(0, 255, 100, 0.08),
+      inset 0 0 60px rgba(0, 0, 0, 0.5);
+    background: #000;
+    overflow: clip;
+  }
+
+  #draw_element {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-rows: auto auto 1fr auto auto;
+    gap: 0;
+    padding: clamp(16px, 2.4vw, 32px);
+    background:
+      radial-gradient(circle at 50% 30%, rgb(0 40 20 / 50%), transparent 65%),
+      #010a02;
+    color: #33ff66;
+    font-family: "Courier New", Courier, monospace;
+  }
+
+  .header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgb(51 255 102 / 15%);
+
+    & .agency {
+      font-size: clamp(9px, 1.1vw, 11px);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #22c55e;
+      opacity: 0.5;
+    }
+
+    & .classification {
+      font-size: clamp(10px, 1.2vw, 12px);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #ef4444;
+      font-weight: bold;
+      text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+    }
+  }
+
+  .login-block {
+    display: grid;
+    gap: 14px;
+    justify-items: center;
+    padding: 20px 0;
+
+    & .lock-icon {
+      width: 48px;
+      height: 48px;
+      border: 2px solid rgb(51 255 102 / 30%);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+    }
+
+    & h1 {
+      margin: 0;
+      font-size: clamp(18px, 2.8vw, 32px);
+      letter-spacing: 0.2em;
+      color: #33ff66;
+      text-shadow: 0 0 20px rgba(51, 255, 102, 0.4);
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    & .subtitle {
+      font-size: clamp(10px, 1.2vw, 13px);
+      color: #22c55e;
+      opacity: 0.5;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+  }
+
+  .form {
+    display: grid;
+    gap: 12px;
+    max-width: 360px;
+    width: 100%;
+    justify-self: center;
+    align-self: center;
+  }
+
+  .field {
+    display: grid;
+    gap: 4px;
+
+    & label {
+      font-size: clamp(9px, 1vw, 11px);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #22c55e;
+      opacity: 0.6;
+    }
+
+    & input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border: 1px solid rgb(51 255 102 / 25%);
+      border-radius: 2px;
+      background: rgb(0 0 0 / 60%);
+      color: #33ff66;
+      font: inherit;
+      font-size: clamp(13px, 1.5vw, 16px);
+      letter-spacing: 0.05em;
+      caret-color: #33ff66;
+
+      &::placeholder { color: rgb(51 255 102 / 20%); }
+      &:focus { outline: 1px solid rgb(51 255 102 / 40%); }
+    }
+  }
+
+  .submit-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 4px;
+
+    & button {
+      padding: 10px 28px;
+      border: 1px solid rgb(51 255 102 / 40%);
+      border-radius: 2px;
+      background: rgb(51 255 102 / 10%);
+      color: #33ff66;
+      font: bold clamp(12px, 1.3vw, 14px) "Courier New", Courier, monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+    }
+
+    & .status-text {
+      font-size: clamp(9px, 1vw, 11px);
+      color: #22c55e;
+      opacity: 0.4;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+  }
+
+  .footer-bar {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 10px;
+    margin-top: 12px;
+    border-top: 1px solid rgb(51 255 102 / 10%);
+    font-size: clamp(8px, 0.9vw, 10px);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #22c55e;
+    opacity: 0.3;
+  }
+
+  .hint {
+    text-align: center;
+    margin-top: 12px;
+    color: #4b5563;
+    font-size: 13px;
+    user-select: none;
+  }
+
+  #status {
+    margin-top: 10px;
+    max-width: min(900px, 92vw);
+    padding: 10px 14px;
+    border: 1px solid #7f1d1d;
+    border-radius: 6px;
+    background: #1f1111;
+    color: #fecaca;
+    font: 13px/1.4 system-ui, sans-serif;
+    white-space: pre-wrap;
+  }
+</style>
+
+<canvas id="canvas" layoutsubtree>
+  <div id="draw_element">
+    <div class="header-bar">
+      <span class="agency">NSA // ECHELON DIVISION</span>
+      <span class="classification">TOP SECRET // SCI</span>
+    </div>
+
+    <div class="login-block">
+      <div class="lock-icon">🔒</div>
+      <h1>Secure Terminal</h1>
+      <span class="subtitle">Authentication Required — Clearance Level 5</span>
+    </div>
+
+    <div class="form">
+      <div class="field">
+        <label>Operative ID</label>
+        <input type="text" placeholder="Enter ID..." autocomplete="off" />
+      </div>
+      <div class="field">
+        <label>Access Code</label>
+        <input type="password" placeholder="••••••••••" autocomplete="off" />
+      </div>
+      <div class="submit-row">
+        <button>Authenticate</button>
+        <span class="status-text">Attempts: <span id="click-count">0</span></span>
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      <span>Session #4A7F-29B1</span>
+      <span>Encrypted AES-256</span>
+      <span>Node: DARKSTAR-7</span>
+    </div>
+  </div>
+</canvas>
+<p class="hint">Move mouse left/right to control distortion strength</p>
+<div id="status" hidden></div>
+
+<script>
+  const canvas = document.getElementById("canvas");
+
+  const vsSource = `
+    attribute vec2 aPosition;
+    attribute vec2 aTexCoord;
+    varying vec2 v_uv;
+    void main() {
+      gl_Position = vec4(aPosition, 0.0, 1.0);
+      v_uv = aTexCoord;
+    }
+  `;
+
+  const fsSource = `
+    precision highp float;
+    uniform vec2 u_resolution;
+    uniform vec2 u_mouse;
+    uniform float u_time;
+    uniform float u_frame;
+    uniform sampler2D u_texture;
+    varying vec2 v_uv;
+
+    highp float random1d(float dt) {
+      highp float c = 43758.5453;
+      highp float sn = mod(dt, 3.14);
+      return fract(sin(sn) * c);
+    }
+
+    highp float noise1d(float value) {
+      highp float i = floor(value);
+      highp float f = fract(value);
+      return mix(random1d(i), random1d(i + 1.0), smoothstep(0.0, 1.0, f));
+    }
+
+    highp float random2d(vec2 co) {
+      highp float a = 12.9898;
+      highp float b = 78.233;
+      highp float c = 43758.5453;
+      highp float dt = dot(co.xy, vec2(a, b));
+      highp float sn = mod(dt, 3.14);
+      return fract(sin(sn) * c);
+    }
+
+    vec2 barrelDistort(vec2 uv, float k) {
+      vec2 c = uv - 0.5;
+      float r2 = dot(c, c);
+      return c * (1.0 + k * r2) + 0.5;
+    }
+
+    void main() {
+      // CRT barrel distortion
+      float curvature = 0.4;
+      vec2 curved = barrelDistort(v_uv, curvature);
+
+      // Black outside the curved screen area
+      if (curved.x < 0.0 || curved.x > 1.0 || curved.y < 0.0 || curved.y > 1.0) {
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        return;
+      }
+
+      // Bad TV distortion
+      float strength = (0.3 + 0.7 * noise1d(0.3 * u_time)) * u_mouse.x / u_resolution.x;
+      float jump = 500.0 * floor(0.3 * (u_mouse.x / u_resolution.x) * (u_time + noise1d(u_time)));
+
+      vec2 uv = curved;
+      uv.y += 0.2 * strength * (noise1d(5.0 * curved.y + 2.0 * u_time + jump) - 0.5);
+      uv.x += 0.1 * strength * (noise1d(100.0 * strength * uv.y + 3.0 * u_time + jump) - 0.5);
+
+      vec3 pixel_color = texture2D(u_texture, uv).rgb;
+
+      // White noise
+      pixel_color += vec3(5.0 * strength * (random2d(curved + 1.133001 * vec2(u_time, 1.13)) - 0.5));
+
+      // Scanlines
+      float scanline = sin(curved.y * u_resolution.y * 1.1) * 0.04 + 0.96;
+      pixel_color *= scanline;
+
+      // Vignette
+      vec2 vig = curved - 0.5;
+      float vigAmount = 1.0 - dot(vig, vig) * 1.8;
+      pixel_color *= clamp(vigAmount, 0.0, 1.0);
+
+      gl_FragColor = vec4(pixel_color, 1.0);
+    }
+  `;
+
+  let gl = null;
+  let program = null;
+  let uniforms = {};
+  let frame = 0;
+  let mouseX = 0;
+  let mouseY = 0;
+  let initialized = false;
+
+  function showStatus(message) {
+    const el = document.getElementById("status");
+    el.hidden = false;
+    el.textContent = message;
+    console.error(message);
+  }
+
+  function compileShader(type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      const log = gl.getShaderInfoLog(shader);
+      gl.deleteShader(shader);
+      showStatus(`Shader compile error:\n${log}`);
+      return null;
+    }
+    return shader;
+  }
+
+  function initGL() {
+    gl = canvas.getContext("webgl");
+    if (!gl) {
+      showStatus(
+        "Unable to initialize WebGL.\n\n" +
+        "Check:\n" +
+        "- chrome://flags/#canvas-draw-element = Enabled\n" +
+        "- chrome://gpu → WebGL = Hardware accelerated\n" +
+        "- Settings > System > Use graphics acceleration = On"
+      );
+      return false;
+    }
+
+    if (typeof gl.texElementImage2D !== "function") {
+      showStatus(
+        "WebGL context created, but texElementImage2D is missing.\n" +
+        "The html-in-canvas experimental API is not active for WebGL."
+      );
+      return false;
+    }
+
+    const vs = compileShader(gl.VERTEX_SHADER, vsSource);
+    const fs = compileShader(gl.FRAGMENT_SHADER, fsSource);
+    if (!vs || !fs) return false;
+
+    program = gl.createProgram();
+    gl.attachShader(program, vs);
+    gl.attachShader(program, fs);
+    gl.linkProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      showStatus(`Program link error:\n${gl.getProgramInfoLog(program)}`);
+      return false;
+    }
+
+    gl.useProgram(program);
+
+    const verts = new Float32Array([
+      -1, -1,  0, 1,
+       1, -1,  1, 1,
+      -1,  1,  0, 0,
+       1,  1,  1, 0,
+    ]);
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
+
+    const aPos = gl.getAttribLocation(program, "aPosition");
+    gl.enableVertexAttribArray(aPos);
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 16, 0);
+
+    const aTex = gl.getAttribLocation(program, "aTexCoord");
+    gl.enableVertexAttribArray(aTex);
+    gl.vertexAttribPointer(aTex, 2, gl.FLOAT, false, 16, 8);
+
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    const el = canvas.firstElementChild;
+    gl.texElementImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, el);
+
+    uniforms = {
+      u_resolution: gl.getUniformLocation(program, "u_resolution"),
+      u_mouse: gl.getUniformLocation(program, "u_mouse"),
+      u_time: gl.getUniformLocation(program, "u_time"),
+      u_frame: gl.getUniformLocation(program, "u_frame"),
+    };
+
+    return true;
+  }
+
+  function render() {
+    if (!gl || !program) return;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.uniform2f(uniforms.u_resolution, canvas.width, canvas.height);
+    gl.uniform2f(uniforms.u_mouse, mouseX, mouseY);
+    gl.uniform1f(uniforms.u_time, performance.now() / 1000);
+    gl.uniform1f(uniforms.u_frame, frame++);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  let clicks = 0;
+  const clickCountEl = document.getElementById("click-count");
+
+  canvas.addEventListener("pointermove", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = (e.clientX - rect.left) * devicePixelRatio;
+    mouseY = (e.clientY - rect.top) * devicePixelRatio;
+  });
+
+  canvas.addEventListener("pointerdown", () => {
+    clicks++;
+    clickCountEl.textContent = clicks;
+  });
+
+  function uploadTexture() {
+    if (!gl) return;
+    const el = canvas.firstElementChild;
+    try {
+      gl.texElementImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, el);
+    } catch {}
+  }
+
+  canvas.onpaint = () => {
+    if (!initialized) {
+      initialized = true;
+      if (!initGL()) return;
+      requestAnimationFrame(tick);
+      return;
+    }
+    uploadTexture();
+  };
+
+  function tick() {
+    canvas.requestPaint();
+    render();
+    requestAnimationFrame(tick);
+  }
+
+  new ResizeObserver(([entry]) => {
+    const box = entry.devicePixelContentBoxSize[0];
+    canvas.width = box.inlineSize;
+    canvas.height = box.blockSize;
+    canvas.requestPaint();
+  }).observe(canvas, { box: "device-pixel-content-box" });
+</script>

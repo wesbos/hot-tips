@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+    background: #fff;
+    font-family: "DM Sans", system-ui, sans-serif;
+  }
+
+  canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    grid-area: 1 / 1;
+    cursor: crosshair;
+  }
+
+  #content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    background: #fff;
+    padding: 24px;
+  }
+
+  #content span {
+    font-family: "Archivo Black", system-ui, sans-serif;
+    font-weight: 400;
+    color: #000;
+    line-height: 0.92;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    text-align: center;
+    display: block;
+    white-space: nowrap;
+  }
+
+  #panel {
+    grid-area: 1 / 1;
+    align-self: start;
+    justify-self: end;
+    margin: 12px;
+    width: 220px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 10;
+    font-size: 11px;
+    color: #334155;
+    user-select: none;
+  }
+
+  .panel-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .panel-row label {
+    width: 62px;
+    flex-shrink: 0;
+    font-weight: 500;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+  }
+
+  .panel-row input[type="range"] {
+    flex: 1;
+    height: 4px;
+    accent-color: #334155;
+  }
+
+  .panel-row .val {
+    width: 30px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-size: 10px;
+    color: #94a3b8;
+  }
+
+  .panel-section {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+    padding-top: 4px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .dir-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .dir-ring {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+  }
+
+  .dir-ring canvas {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 1px solid #cbd5e1;
+    cursor: pointer;
+  }
+
+  .dir-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+  }
+
+  .dir-fields .panel-row label { width: 42px; }
+
+  .btn-reset {
+    padding: 5px 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: transparent;
+    font: inherit;
+    font-size: 10px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  .btn-reset:hover { background: #f8fafc; }
+
+  .mode-toggle {
+    display: flex;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+  }
+
+  .mode-toggle button {
+    flex: 1;
+    padding: 6px 0;
+    border: none;
+    background: transparent;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    cursor: pointer;
+  }
+
+  .mode-toggle button.active {
+    background: #1e293b;
+    color: #fff;
+  }
+</style>
+
+<canvas layoutsubtree>
+  <div id="content">
+    <span>No matter how long</span>
+    <span>I lie here under water</span>
+    <span>Something feels wrong</span>
+    <span>And oh, hang me like roses</span>
+    <span>You can have something pretty</span>
+    <span>When I'm dried out and dead</span>
+  </div>
+</canvas>
+
+<div id="panel">
+  <div class="mode-toggle">
+    <button id="btn-edit" class="active" type="button">Edit</button>
+    <button id="btn-view" type="button">View</button>
+  </div>
+
+  <div class="panel-section">Brush</div>
+  <div class="panel-row">
+    <label>Width</label>
+    <input type="range" id="s-width" min="40" max="500" value="220" />
+    <span class="val" id="v-width">220</span>
+  </div>
+  <div class="panel-row">
+    <label>Height</label>
+    <input type="range" id="s-height" min="40" max="500" value="220" />
+    <span class="val" id="v-height">220</span>
+  </div>
+
+  <div class="panel-section">Noise</div>
+  <div class="panel-row">
+    <label>Spread</label>
+    <input type="range" id="s-spread" min="5" max="120" value="60" />
+    <span class="val" id="v-spread">60</span>
+  </div>
+  <div class="panel-row">
+    <label>Grain</label>
+    <input type="range" id="s-grain" min="1" max="8" value="1.5" step="0.5" />
+    <span class="val" id="v-grain">1.5</span>
+  </div>
+  <div class="panel-row">
+    <label>Samples</label>
+    <input type="range" id="s-samples" min="2" max="12" value="6" step="1" />
+    <span class="val" id="v-samples">6</span>
+  </div>
+
+  <div class="panel-section">Direction</div>
+  <div class="dir-wrap">
+    <div class="dir-ring">
+      <canvas id="dir-canvas" width="112" height="112"></canvas>
+    </div>
+    <div class="dir-fields">
+      <div class="panel-row">
+        <label>Angle</label>
+        <input type="range" id="s-angle" min="0" max="360" value="0" />
+        <span class="val" id="v-angle">0°</span>
+      </div>
+      <div class="panel-row">
+        <label>Bias</label>
+        <input type="range" id="s-bias" min="0" max="100" value="0" />
+        <span class="val" id="v-bias">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-reset" id="btn-reset" type="button">Clear stamps</button>
+</div>
+
+<script>
+  const canvas = document.querySelector("canvas[layoutsubtree]");
+  const ctx = canvas.getContext("2d");
+  const content = document.getElementById("content");
+
+  function fitText() {
+    const lines = content.querySelectorAll("span");
+    const containerW = content.clientWidth;
+    for (const line of lines) {
+      line.style.fontSize = "10px";
+      const natural = line.scrollWidth;
+      if (natural > 0) line.style.fontSize = `${(containerW / natural) * 10}px`;
+    }
+  }
+  fitText();
+  new ResizeObserver(fitText).observe(content);
+
+  const snap = document.createElement("canvas");
+  const snapCtx = snap.getContext("2d");
+
+  let mouseX = -9999, mouseY = -9999;
+  let mode = "edit";
+  const stamps = [];
+  let pendingStamp = null;
+
+  const P = {
+    radiusX: 220, radiusY: 220,
+    spread: 60, grain: 1.5, samples: 6,
+    angle: 0, bias: 0,
+  };
+
+  let noiseSeed = 0, noiseFieldA = null, noiseFieldB = null;
+  let lastNW = 0, lastNH = 0;
+
+  function rng() {
+    noiseSeed = (noiseSeed * 1664525 + 1013904223) >>> 0;
+    return (noiseSeed >>> 16) / 65536;
+  }
+
+  function makeNoiseField(rw, rh, seed) {
+    const cs = P.grain;
+    const cols = Math.ceil(rw / cs) + 2;
+    const rows = Math.ceil(rh / cs) + 2;
+    noiseSeed = seed >>> 0;
+    const field = new Float32Array(cols * rows * 2);
+    for (let i = 0; i < field.length; i++) field[i] = (rng() - 0.5) * 2;
+    return { field, cols, rows, cellSize: cs };
+  }
+
+  function sampleField(nd, px, py) {
+    const gx = px / nd.cellSize, gy = py / nd.cellSize;
+    const ix = gx | 0, iy = gy | 0;
+    const fx = gx - ix, fy = gy - iy, ify = 1 - fy;
+    const mx = nd.cols - 1, my = nd.rows - 1, c = nd.cols, f = nd.field;
+    const r0 = Math.min(iy, my) * c, r1 = Math.min(iy + 1, my) * c;
+    const c0 = Math.min(ix, mx), c1 = Math.min(ix + 1, mx);
+    const i00 = (r0 + c0) << 1, i10 = (r0 + c1) << 1;
+    const i01 = (r1 + c0) << 1, i11 = (r1 + c1) << 1;
+    return {
+      nx: (f[i00] + (f[i10] - f[i00]) * fx) * ify + (f[i01] + (f[i11] - f[i01]) * fx) * fy,
+      ny: (f[i00+1] + (f[i10+1] - f[i00+1]) * fx) * ify + (f[i01+1] + (f[i11+1] - f[i01+1]) * fx) * fy,
+    };
+  }
+
+  function ensureNoise(rw, rh) {
+    if (noiseFieldA && rw === lastNW && rh === lastNH) return;
+    noiseFieldA = makeNoiseField(rw, rh, 0x5f3759df);
+    noiseFieldB = makeNoiseField(rw, rh, 0xdeadbeef);
+    lastNW = rw; lastNH = rh;
+  }
+
+  function regionBounds(cx, cy, w, h) {
+    const rxPx = P.radiusX * devicePixelRatio;
+    const ryPx = P.radiusY * devicePixelRatio;
+    const pad = Math.ceil(P.spread * devicePixelRatio) + 2;
+    return {
+      left: Math.max(0, Math.floor(cx - rxPx - pad)),
+      top:  Math.max(0, Math.floor(cy - ryPx - pad)),
+      rw:   Math.min(w, Math.ceil(cx + rxPx + pad)) - Math.max(0, Math.floor(cx - rxPx - pad)),
+      rh:   Math.min(h, Math.ceil(cy + ryPx + pad)) - Math.max(0, Math.floor(cy - ryPx - pad)),
+    };
+  }
+
+  function distortRegion(src, srcW, left, top_, rw, rh, cx, cy) {
+    const out = new ImageData(rw, rh);
+    const od = out.data, sd = src.data;
+
+    for (let py = 0; py < rh; py++) {
+      const srcRow = (top_ + py) * srcW;
+      const outRow = py * rw;
+      for (let px = 0; px < rw; px++) {
+        const si = (srcRow + left + px) << 2;
+        const di = (outRow + px) << 2;
+        od[di] = sd[si]; od[di+1] = sd[si+1]; od[di+2] = sd[si+2]; od[di+3] = sd[si+3];
+      }
+    }
+
+    const rxPx = P.radiusX * devicePixelRatio;
+    const ryPx = P.radiusY * devicePixelRatio;
+    const noiseAmt = P.spread * devicePixelRatio;
+    const samples = P.samples;
+    const invSm1 = 1 / (samples - 1);
+    const biasAmt = P.bias / 100;
+    const biasRad = P.angle * Math.PI / 180;
+    const biasDx = Math.cos(biasRad) * biasAmt;
+    const biasDy = Math.sin(biasRad) * biasAmt;
+    const srcH = src.height;
+
+    ensureNoise(rw, rh);
+
+    for (let py = 0; py < rh; py++) {
+      const absY = top_ + py;
+      const nyNorm = (absY - cy) / ryPx;
+
+      for (let px = 0; px < rw; px++) {
+        const absX = left + px;
+        const nxNorm = (absX - cx) / rxPx;
+        const eDist = nxNorm * nxNorm + nyNorm * nyNorm;
+        if (eDist > 1) continue;
+
+        const str2 = (1 - Math.sqrt(eDist)) ** 2;
+        const nA = sampleField(noiseFieldA, px, py);
+        const nB = sampleField(noiseFieldB, px, py);
+        const dispX = ((nA.nx * 0.7 + nB.nx * 0.3) * (1 - biasAmt) + biasDx) * noiseAmt * str2;
+        const dispY = ((nA.ny * 0.7 + nB.ny * 0.3) * (1 - biasAmt) + biasDy) * noiseAmt * str2;
+
+        let rA = 0, gA = 0, bA = 0, aA = 0, tW = 0;
+        for (let s = 0; s < samples; s++) {
+          const t = s * invSm1;
+          let sx = (absX + dispX * t) | 0;
+          let sy = (absY + dispY * t) | 0;
+          if (sx < 0) sx = 0; else if (sx >= srcW) sx = srcW - 1;
+          if (sy < 0) sy = 0; else if (sy >= srcH) sy = srcH - 1;
+          const w = 1 - t * 0.6;
+          const si = (sy * srcW + sx) << 2;
+          rA += sd[si] * w; gA += sd[si+1] * w; bA += sd[si+2] * w; aA += sd[si+3] * w;
+          tW += w;
+        }
+
+        const inv = 1 / tW;
+        const oi = (py * rw + px) << 2;
+        od[oi] = (rA * inv + 0.5) | 0;
+        od[oi+1] = (gA * inv + 0.5) | 0;
+        od[oi+2] = (bA * inv + 0.5) | 0;
+        od[oi+3] = (aA * inv + 0.5) | 0;
+      }
+    }
+    return out;
+  }
+
+  canvas.addEventListener("pointermove", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = (e.clientX - rect.left) * devicePixelRatio;
+    mouseY = (e.clientY - rect.top) * devicePixelRatio;
+  });
+  canvas.addEventListener("pointerleave", () => { mouseX = mouseY = -9999; });
+
+  canvas.addEventListener("click", (e) => {
+    if (mode !== "edit") return;
+    const rect = canvas.getBoundingClientRect();
+    pendingStamp = {
+      x: (e.clientX - rect.left) * devicePixelRatio,
+      y: (e.clientY - rect.top) * devicePixelRatio,
+    };
+  });
+
+  canvas.onpaint = () => {
+    const w = canvas.width, h = canvas.height;
+    if (!w || !h) return;
+
+    ctx.reset();
+    ctx.clearRect(0, 0, w, h);
+
+    try {
+      const transform = ctx.drawElementImage(content, 0, 0, w, h);
+      content.style.transform = transform.toString();
+    } catch { return; }
+
+    for (const stamp of stamps) {
+      ctx.putImageData(stamp.data, stamp.left, stamp.top);
+    }
+
+    if (pendingStamp) {
+      snapCtx.clearRect(0, 0, w, h);
+      snapCtx.drawImage(canvas, 0, 0);
+      const src = snapCtx.getImageData(0, 0, w, h);
+      const b = regionBounds(pendingStamp.x, pendingStamp.y, w, h);
+      if (b.rw > 0 && b.rh > 0) {
+        const patch = distortRegion(src, w, b.left, b.top, b.rw, b.rh, pendingStamp.x, pendingStamp.y);
+        stamps.push({ left: b.left, top: b.top, data: patch });
+        ctx.putImageData(patch, b.left, b.top);
+      }
+      pendingStamp = null;
+    }
+
+    if (mode === "edit" && mouseX > -9000) {
+      snapCtx.clearRect(0, 0, w, h);
+      snapCtx.drawImage(canvas, 0, 0);
+      const src = snapCtx.getImageData(0, 0, w, h);
+      const b = regionBounds(mouseX, mouseY, w, h);
+      if (b.rw > 0 && b.rh > 0) {
+        const result = distortRegion(src, w, b.left, b.top, b.rw, b.rh, mouseX, mouseY);
+        ctx.putImageData(result, b.left, b.top);
+      }
+
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(devicePixelRatio, devicePixelRatio);
+      ctx.beginPath();
+      ctx.ellipse(mouseX / devicePixelRatio, mouseY / devicePixelRatio, P.radiusX, P.radiusY, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(0,0,0,0.25)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+    }
+  };
+
+  new ResizeObserver(([entry]) => {
+    const box = entry.devicePixelContentBoxSize[0];
+    canvas.width = box.inlineSize;
+    canvas.height = box.blockSize;
+    snap.width = box.inlineSize;
+    snap.height = box.blockSize;
+    noiseFieldA = noiseFieldB = null;
+    lastNW = lastNH = 0;
+    canvas.requestPaint();
+  }).observe(canvas, { box: "device-pixel-content-box" });
+
+  (function tick() {
+    canvas.requestPaint();
+    requestAnimationFrame(tick);
+  })();
+
+  // ─── UI ───
+
+  function wire(id, valId, prop, fmt) {
+    const sl = document.getElementById(id);
+    const vl = document.getElementById(valId);
+    sl.value = P[prop];
+    vl.textContent = fmt(P[prop]);
+    sl.addEventListener("input", () => {
+      P[prop] = parseFloat(sl.value);
+      vl.textContent = fmt(P[prop]);
+      noiseFieldA = noiseFieldB = null; lastNW = lastNH = 0;
+    });
+  }
+
+  wire("s-width",   "v-width",   "radiusX",  v => v);
+  wire("s-height",  "v-height",  "radiusY",  v => v);
+  wire("s-spread",  "v-spread",  "spread",   v => v);
+  wire("s-grain",   "v-grain",   "grain",    v => v);
+  wire("s-samples", "v-samples", "samples",  v => v);
+  wire("s-angle",   "v-angle",   "angle",    v => v + "°");
+  wire("s-bias",    "v-bias",    "bias",     v => v + "%");
+
+  document.getElementById("btn-reset").addEventListener("click", () => { stamps.length = 0; pendingStamp = null; });
+
+  const btnEdit = document.getElementById("btn-edit");
+  const btnView = document.getElementById("btn-view");
+  function setMode(m) {
+    mode = m;
+    btnEdit.classList.toggle("active", m === "edit");
+    btnView.classList.toggle("active", m === "view");
+    canvas.style.cursor = m === "edit" ? "crosshair" : "default";
+  }
+  btnEdit.addEventListener("click", () => setMode("edit"));
+  btnView.addEventListener("click", () => setMode("view"));
+
+  const dirCanvas = document.getElementById("dir-canvas");
+  const dirCtx = dirCanvas.getContext("2d");
+
+  function drawDirRing() {
+    const s = 112, cx = s/2, cy = s/2, r = 42;
+    dirCtx.clearRect(0, 0, s, s);
+    dirCtx.beginPath(); dirCtx.arc(cx, cy, r, 0, Math.PI * 2);
+    dirCtx.strokeStyle = "#cbd5e1"; dirCtx.lineWidth = 1.5; dirCtx.stroke();
+    dirCtx.beginPath(); dirCtx.arc(cx, cy, 3, 0, Math.PI * 2);
+    dirCtx.fillStyle = "#94a3b8"; dirCtx.fill();
+    const len = (P.bias / 100) * r;
+    if (len > 2) {
+      const rad = P.angle * Math.PI / 180;
+      const tx = cx + Math.cos(rad) * len, ty = cy + Math.sin(rad) * len;
+      dirCtx.beginPath(); dirCtx.moveTo(cx, cy); dirCtx.lineTo(tx, ty);
+      dirCtx.strokeStyle = "#1e293b"; dirCtx.lineWidth = 2; dirCtx.stroke();
+      dirCtx.beginPath(); dirCtx.arc(tx, ty, 5, 0, Math.PI * 2);
+      dirCtx.fillStyle = "#1e293b"; dirCtx.fill();
+    }
+  }
+  drawDirRing();
+  document.getElementById("s-angle").addEventListener("input", drawDirRing);
+  document.getElementById("s-bias").addEventListener("input", drawDirRing);
+
+  let dragging = false;
+  dirCanvas.addEventListener("pointerdown", (e) => { dragging = true; dirCanvas.setPointerCapture(e.pointerId); updateDir(e); });
+  dirCanvas.addEventListener("pointermove", (e) => { if (dragging) updateDir(e); });
+  dirCanvas.addEventListener("pointerup", () => { dragging = false; });
+
+  function updateDir(e) {
+    const rect = dirCanvas.getBoundingClientRect();
+    const dx = e.clientX - rect.left - rect.width/2;
+    const dy = e.clientY - rect.top - rect.height/2;
+    let a = Math.atan2(dy, dx) * 180 / Math.PI; if (a < 0) a += 360;
+    P.angle = Math.round(a);
+    P.bias = Math.round(Math.min(1, Math.hypot(dx, dy) / (42 * rect.width / 112)) * 100);
+    document.getElementById("s-angle").value = P.angle;
+    document.getElementById("v-angle").textContent = P.angle + "°";
+    document.getElementById("s-bias").value = P.bias;
+    document.getElementById("v-bias").textContent = P.bias + "%";
+    drawDirRing();
+  }
+</script>

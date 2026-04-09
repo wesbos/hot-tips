@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>Water Displacement Input</title>
+
+<style>
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at 40% 30%, #0c4a6e 0%, #0f172a 50%, #020617 100%);
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  canvas {
+    width: min(700px, 90vw);
+    aspect-ratio: 7 / 4;
+    border-radius: 16px;
+    border: 1px solid rgb(148 163 184 / 30%);
+    box-shadow: 0 24px 60px rgb(0 0 0 / 45%), inset 0 0 0 1px rgb(255 255 255 / 6%);
+    overflow: clip;
+  }
+
+  #draw_element {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    display: grid;
+    place-items: center;
+    place-content: center;
+    gap: 5px;
+    padding: clamp(20px, 3vw, 40px);
+    background: radial-gradient(circle at 30% 25%, rgb(56 189 248 / 12%), transparent 40%),
+      radial-gradient(circle at 70% 70%, rgb(99 102 241 / 10%), transparent 35%),
+      linear-gradient(180deg, #0f172a, #0b1120 50%, #0a0f1e);
+    color: #e2e8f0;
+  }
+
+  #draw_element h2 {
+    margin: 0;
+    font-size: clamp(16px, 2.4vw, 22px);
+    letter-spacing: -0.02em;
+    color: #cbd5e1;
+    text-align: center;
+  }
+
+  #draw_element input[type="range"] {
+    width: 500px;
+    height: 6px;
+    appearance: none;
+    background: rgb(51 65 85 / 60%);
+    border-radius: 999px;
+    outline: none;
+
+    &::-webkit-slider-thumb {
+      appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #38bdf8, #3b82f6);
+      border: 3px solid #e2e8f0;
+      box-shadow: 0 2px 10px rgba(56, 189, 248, 0.5);
+      cursor: grab;
+    }
+  }
+
+  #draw_element .value-display {
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: #38bdf8;
+    text-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hint {
+    text-align: center;
+    margin-top: 14px;
+    color: #475569;
+    font-size: 13px;
+    user-select: none;
+  }
+</style>
+
+<canvas id="canvas" layoutsubtree>
+  <div id="draw_element">
+    <h2>Drag the slider</h2>
+    <input type="range" id="slider" min="0" max="100" value="50" />
+    <div class="value-display" id="val-display">50</div>
+  </div>
+</canvas>
+<p class="hint">The slider thumb pushes the background like a finger through water</p>
+
+<script>
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  const slider = document.getElementById("slider");
+  const valDisplay = document.getElementById("val-display");
+
+  const sourceLayer = document.createElement("canvas");
+  const sourceCtx = sourceLayer.getContext("2d");
+
+  const CELL = 4;
+  let cols = 0,
+    rows = 0;
+  let velX, velY, dispX, dispY;
+
+  let lastThumbX = -1,
+    lastThumbY = -1;
+
+  const RADIUS = 70;
+  const STRENGTH = 22;
+  const DAMPING = 0.48;
+  const SPRING = 0.1;
+  const SPREAD = 0.25;
+  const THUMB_R = 20;
+
+  slider.addEventListener("input", () => {
+    valDisplay.textContent = slider.value;
+  });
+
+  function getThumbCanvasPos() {
+    const rect = canvas.getBoundingClientRect();
+    const sr = slider.getBoundingClientRect();
+    const pct = (slider.value - slider.min) / (slider.max - slider.min);
+    const tw = 28;
+    const tx = sr.left + tw / 2 + pct * (sr.width - tw);
+    const ty = sr.top + sr.height / 2;
+    return {
+      x: (tx - rect.left) * devicePixelRatio,
+      y: (ty - rect.top) * devicePixelRatio,
+    };
+  }
+
+  function initGrid(w, h) {
+    cols = Math.ceil(w / CELL) + 2;
+    rows = Math.ceil(h / CELL) + 2;
+    const len = cols * rows;
+    velX = new Float32Array(len);
+    velY = new Float32Array(len);
+    dispX = new Float32Array(len);
+    dispY = new Float32Array(len);
+    lastThumbX = -1;
+  }
+
+  function setBackingSize(w, h) {
+    canvas.width = w;
+    canvas.height = h;
+    sourceLayer.width = w;
+    sourceLayer.height = h;
+    initGrid(w, h);
+    canvas.requestPaint();
+  }
+
+  function applyForce(cx, cy, fvx, fvy) {
+    const r = RADIUS * devicePixelRatio;
+    const r2 = r * r;
+    const str = STRENGTH * devicePixelRatio;
+
+    const cCol = Math.floor(cx / CELL);
+    const cRow = Math.floor(cy / CELL);
+    const span = Math.ceil(r / CELL);
+
+    for (let dj = -span; dj <= span; dj++) {
+      const j = cRow + dj;
+      if (j < 0 || j >= rows) continue;
+      for (let di = -span; di <= span; di++) {
+        const i = cCol + di;
+        if (i < 0 || i >= cols) continue;
+
+        const gx = i * CELL,
+          gy = j * CELL;
+        const dx = gx - cx,
+          dy = gy - cy;
+        const d2 = dx * dx + dy * dy;
+        if (d2 > r2) continue;
+
+        const dist = Math.sqrt(d2) || 0.01;
+        const t = 1 - dist / r;
+        const falloff = t * t * t;
+        const idx = j * cols + i;
+
+        velX[idx] += (dx / dist) * str * falloff + fvx * falloff * 0.5;
+        velY[idx] += (dy / dist) * str * falloff + fvy * falloff * 0.5;
+      }
+    }
+  }
+
+  function stepPhysics() {
+    const len = cols * rows;
+    for (let k = 0; k < len; k++) {
+      velX[k] *= DAMPING;
+      velY[k] *= DAMPING;
+      velX[k] += -SPRING * dispX[k];
+      velY[k] += -SPRING * dispY[k];
+      dispX[k] += velX[k];
+      dispY[k] += velY[k];
+    }
+
+    for (let j = 1; j < rows - 1; j++) {
+      for (let i = 1; i < cols - 1; i++) {
+        const idx = j * cols + i;
+        const avgX = (dispX[idx - 1] + dispX[idx + 1] + dispX[idx - cols] + dispX[idx + cols]) * 0.25;
+        const avgY = (dispY[idx - 1] + dispY[idx + 1] + dispY[idx - cols] + dispY[idx + cols]) * 0.25;
+        dispX[idx] += (avgX - dispX[idx]) * SPREAD;
+        dispY[idx] += (avgY - dispY[idx]) * SPREAD;
+      }
+    }
+  }
+
+  function sampleDisp(px, py) {
+    const ci = px / CELL,
+      cj = py / CELL;
+    const i = Math.max(0, Math.min(cols - 2, Math.floor(ci)));
+    const j = Math.max(0, Math.min(rows - 2, Math.floor(cj)));
+    const fx = ci - i,
+      fy = cj - j;
+
+    const i00 = j * cols + i;
+    const i10 = i00 + 1;
+    const i01 = i00 + cols;
+    const i11 = i01 + 1;
+
+    return {
+      x:
+        (1 - fx) * (1 - fy) * dispX[i00] +
+        fx * (1 - fy) * dispX[i10] +
+        (1 - fx) * fy * dispX[i01] +
+        fx * fy * dispX[i11],
+      y:
+        (1 - fx) * (1 - fy) * dispY[i00] +
+        fx * (1 - fy) * dispY[i10] +
+        (1 - fx) * fy * dispY[i01] +
+        fx * fy * dispY[i11],
+    };
+  }
+
+  function renderDisplaced(thumbCX, thumbCY) {
+    const w = canvas.width,
+      h = canvas.height;
+    const thumbR = THUMB_R * devicePixelRatio;
+    const thumbR2 = thumbR * thumbR;
+
+    for (let dy = 0; dy < h; dy += CELL) {
+      const dh = Math.min(CELL, h - dy);
+      for (let dx = 0; dx < w; dx += CELL) {
+        const dw = Math.min(CELL, w - dx);
+        const d = sampleDisp(dx, dy);
+
+        if (Math.abs(d.x) < 0.3 && Math.abs(d.y) < 0.3) {
+          ctx.drawImage(sourceLayer, dx, dy, dw, dh, dx, dy, dw, dh);
+          continue;
+        }
+
+        const srcX = Math.max(0, Math.min(w - dw, dx - d.x));
+        const srcY = Math.max(0, Math.min(h - dh, dy - d.y));
+        ctx.drawImage(sourceLayer, srcX, srcY, dw, dh, dx, dy, dw, dh);
+      }
+    }
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(thumbCX, thumbCY, thumbR + 4 * devicePixelRatio, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.drawImage(sourceLayer, 0, 0);
+    ctx.restore();
+  }
+
+  canvas.onpaint = () => {
+    ctx.reset();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const el = canvas.firstElementChild;
+    if (!(el instanceof HTMLElement) || el.parentElement !== canvas) return;
+    const syncTransform = ctx.drawElementImage(el, 0, 0, canvas.width, canvas.height);
+    el.style.transform = syncTransform.toString();
+
+    sourceCtx.reset();
+    sourceCtx.clearRect(0, 0, sourceLayer.width, sourceLayer.height);
+    sourceCtx.drawImage(canvas, 0, 0);
+
+    const thumb = getThumbCanvasPos();
+    if (lastThumbX >= 0) {
+      const dx = thumb.x - lastThumbX;
+      const dy = thumb.y - lastThumbY;
+      if (Math.abs(dx) > 0.3 || Math.abs(dy) > 0.3) {
+        applyForce(thumb.x, thumb.y, dx * 0.8, dy * 0.8);
+      }
+    }
+    lastThumbX = thumb.x;
+    lastThumbY = thumb.y;
+
+    stepPhysics();
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    renderDisplaced(thumb.x, thumb.y);
+  };
+
+  new ResizeObserver(([entry]) => {
+    const box = entry.devicePixelContentBoxSize[0];
+    setBackingSize(box.inlineSize, box.blockSize);
+  }).observe(canvas, { box: "device-pixel-content-box" });
+
+  function tick() {
+    canvas.requestPaint();
+    requestAnimationFrame(tick);
+  }
+  tick();
+</script>

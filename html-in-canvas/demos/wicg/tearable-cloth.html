@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>Tearable Cloth Buttons</title>
+
+<style>
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at 30% 20%, #1e3a5f 0%, #0f172a 50%, #020617 100%);
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  canvas {
+    width: min(900px, 92vw);
+    aspect-ratio: 16 / 10;
+    border-radius: 16px;
+    border: 1px solid rgb(148 163 184 / 35%);
+    box-shadow:
+      0 24px 60px rgb(0 0 0 / 45%),
+      inset 0 0 0 1px rgb(255 255 255 / 6%);
+    overflow: clip;
+  }
+
+  .btn {
+    pointer-events: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+
+  .btn-blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+  .btn-gray { background: linear-gradient(135deg, #6b7280, #4b5563); }
+  .btn-green { background: linear-gradient(135deg, #22c55e, #16a34a); }
+  .btn-red { background: linear-gradient(135deg, #ef4444, #dc2626); }
+  .btn-amber { background: linear-gradient(135deg, #f59e0b, #d97706); color: #1a1a1a; }
+  .btn-cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+  .btn-purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+  .btn-pink { background: linear-gradient(135deg, #ec4899, #db2777); }
+  .btn-dark { background: linear-gradient(135deg, #374151, #1f2937); }
+  .btn-outline {
+    background: rgba(255, 255, 255, 0.92);
+    border: 2px solid #3b82f6;
+    color: #2563eb;
+  }
+
+  .instructions {
+    color: #64748b;
+    text-align: center;
+    margin-top: 16px;
+    font-size: 14px;
+    user-select: none;
+
+    & button {
+      margin-left: 12px;
+      padding: 4px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      border-radius: 6px;
+      border: 1px solid rgb(148 163 184 / 40%);
+      background: rgb(15 23 42 / 60%);
+      color: #cbd5e1;
+      cursor: pointer;
+
+      &:hover {
+        background: rgb(30 41 59 / 80%);
+      }
+    }
+  }
+</style>
+
+<canvas id="canvas" layoutsubtree></canvas>
+<p class="instructions">
+  Drag to pull · Right-click to tear
+  <button onclick="zeroG()">Zero G!</button>
+  <button onclick="resetCloth()">Reset</button>
+</p>
+
+<script>
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+
+  const cols = 8;
+  const rows = 4;
+  const accuracy = 5;
+  const friction = 0.99;
+  const bounce = 0.5;
+
+  let spacing = 0;
+  let tearDist = 0;
+  let gravity = 0;
+  let cloth = null;
+
+  const mouse = {
+    cut: 0,
+    influence: 0,
+    down: false,
+    button: 1,
+    x: 0, y: 0, px: 0, py: 0,
+  };
+
+  const buttonDefs = [
+    { label: "Save",     cls: "blue"   }, { label: "Edit",     cls: "green"   },
+    { label: "Delete",   cls: "red"    }, { label: "Share",    cls: "cyan"    },
+    { label: "Copy",     cls: "purple" }, { label: "Paste",    cls: "purple"  },
+    { label: "Undo",     cls: "gray"   }, { label: "Redo",     cls: "gray"    },
+    { label: "Submit",   cls: "green"  }, { label: "Cancel",   cls: "red"     },
+    { label: "Reset",    cls: "amber"  }, { label: "Apply",    cls: "blue"    },
+    { label: "Close",    cls: "dark"   }, { label: "Open",     cls: "cyan"    },
+    { label: "Import",   cls: "purple" }, { label: "Export",   cls: "pink"    },
+    { label: "Search",   cls: "blue"   }, { label: "Filter",   cls: "cyan"    },
+    { label: "Sort",     cls: "gray"   }, { label: "Group",    cls: "dark"    },
+    { label: "Pin",      cls: "pink"   }, { label: "Star",     cls: "amber"   },
+    { label: "Like",     cls: "red"    }, { label: "Follow",   cls: "blue"    },
+    { label: "Upload",   cls: "green"  }, { label: "Print",    cls: "gray"    },
+    { label: "Archive",  cls: "dark"   }, { label: "Mute",     cls: "amber"   },
+    { label: "Block",    cls: "red"    }, { label: "Report",   cls: "pink"    },
+    { label: "Settings", cls: "dark"   }, { label: "Help",     cls: "outline" },
+  ];
+
+  const buttons = buttonDefs.map((def) => {
+    const btn = document.createElement("button");
+    btn.className = `btn btn-${def.cls}`;
+    btn.textContent = def.label;
+    canvas.appendChild(btn);
+    return btn;
+  });
+
+  class Point {
+    constructor(x, y) {
+      this.x = x;
+      this.y = y;
+      this.px = x;
+      this.py = y;
+      this.vx = 0;
+      this.vy = 0;
+      this.pinX = null;
+      this.pinY = null;
+      this.constraints = [];
+    }
+
+    update(delta) {
+      if (this.pinX && this.pinY) return this;
+
+      if (mouse.down) {
+        const dx = this.x - mouse.x;
+        const dy = this.y - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (mouse.button === 1 && dist < mouse.influence) {
+          this.px = this.x - (mouse.x - mouse.px);
+          this.py = this.y - (mouse.y - mouse.py);
+        } else if (dist < mouse.cut) {
+          this.constraints = [];
+        }
+      }
+
+      this.addForce(0, gravity);
+
+      const nx = this.x + (this.x - this.px) * friction + this.vx * delta;
+      const ny = this.y + (this.y - this.py) * friction + this.vy * delta;
+
+      this.px = this.x;
+      this.py = this.y;
+      this.x = nx;
+      this.y = ny;
+      this.vy = this.vx = 0;
+
+      if (this.x >= canvas.width) {
+        this.px = canvas.width + (canvas.width - this.px) * bounce;
+        this.x = canvas.width;
+      } else if (this.x <= 0) {
+        this.px *= -1 * bounce;
+        this.x = 0;
+      }
+
+      if (this.y >= canvas.height) {
+        this.py = canvas.height + (canvas.height - this.py) * bounce;
+        this.y = canvas.height;
+      } else if (this.y <= 0) {
+        this.py *= -1 * bounce;
+        this.y = 0;
+      }
+
+      return this;
+    }
+
+    resolve() {
+      if (this.pinX && this.pinY) {
+        this.x = this.pinX;
+        this.y = this.pinY;
+        return;
+      }
+      this.constraints.forEach((c) => c.resolve());
+    }
+
+    attach(point) {
+      this.constraints.push(new Constraint(this, point));
+    }
+
+    free(constraint) {
+      this.constraints.splice(this.constraints.indexOf(constraint), 1);
+    }
+
+    addForce(x, y) {
+      this.vx += x;
+      this.vy += y;
+    }
+
+    pin(px, py) {
+      this.pinX = px;
+      this.pinY = py;
+    }
+  }
+
+  class Constraint {
+    constructor(p1, p2) {
+      this.p1 = p1;
+      this.p2 = p2;
+      this.length = spacing;
+    }
+
+    resolve() {
+      const dx = this.p1.x - this.p2.x;
+      const dy = this.p1.y - this.p2.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < this.length) return;
+      if (dist > tearDist) this.p1.free(this);
+
+      const diff = (this.length - dist) / dist;
+      const mul = diff * 0.5 * (1 - this.length / dist);
+      const px = dx * mul;
+      const py = dy * mul;
+
+      !this.p1.pinX && (this.p1.x += px);
+      !this.p1.pinY && (this.p1.y += py);
+      !this.p2.pinX && (this.p2.x -= px);
+      !this.p2.pinY && (this.p2.y -= py);
+    }
+  }
+
+  class Cloth {
+    constructor(free) {
+      this.points = [];
+      const startX = canvas.width / 2 - ((cols - 1) * spacing) / 2;
+      const startY = spacing * 0.8;
+
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const point = new Point(startX + x * spacing, startY + y * spacing);
+          if (!free && y === 0) point.pin(point.x, point.y);
+          if (x !== 0) point.attach(this.points[this.points.length - 1]);
+          if (y !== 0) point.attach(this.points[x + (y - 1) * cols]);
+          this.points.push(point);
+        }
+      }
+    }
+
+    update(delta) {
+      let i = accuracy;
+      while (i--) {
+        this.points.forEach((p) => p.resolve());
+      }
+      this.points.forEach((p) => p.update(delta * delta));
+    }
+  }
+
+  function toCanvasPoint(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (clientX - rect.left) * devicePixelRatio,
+      y: (clientY - rect.top) * devicePixelRatio,
+    };
+  }
+
+  canvas.addEventListener("pointerdown", (e) => {
+    mouse.button = e.button === 0 ? 1 : e.button === 2 ? 3 : e.button;
+    mouse.down = true;
+    const p = toCanvasPoint(e.clientX, e.clientY);
+    mouse.px = mouse.x = p.x;
+    mouse.py = mouse.y = p.y;
+    canvas.setPointerCapture(e.pointerId);
+  });
+
+  canvas.addEventListener("pointermove", (e) => {
+    const p = toCanvasPoint(e.clientX, e.clientY);
+    mouse.px = mouse.x;
+    mouse.py = mouse.y;
+    mouse.x = p.x;
+    mouse.y = p.y;
+  });
+
+  canvas.addEventListener("pointerup", () => {
+    mouse.down = false;
+  });
+
+  canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  function computePhysicsScale() {
+    const scale = spacing / 8;
+    tearDist = 60 * scale;
+    gravity = 400 * scale;
+    mouse.influence = 36 * scale;
+    mouse.cut = 8 * scale;
+  }
+
+  function setBackingSize(width, height) {
+    canvas.width = width;
+    canvas.height = height;
+    spacing = width / (cols + 3);
+    computePhysicsScale();
+    cloth = new Cloth();
+  }
+
+  function zeroG() {
+    gravity = 0;
+    cloth = new Cloth(true);
+  }
+
+  function resetCloth() {
+    computePhysicsScale();
+    cloth = new Cloth();
+  }
+
+  canvas.onpaint = () => {
+    if (!cloth) return;
+    ctx.reset();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    bg.addColorStop(0, "#f8fafc");
+    bg.addColorStop(1, "#e2e8f0");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = "rgba(100, 116, 139, 0.15)";
+    ctx.lineWidth = 1.5 * devicePixelRatio;
+    ctx.beginPath();
+    for (const point of cloth.points) {
+      for (const c of point.constraints) {
+        ctx.moveTo(c.p1.x, c.p1.y);
+        ctx.lineTo(c.p2.x, c.p2.y);
+      }
+    }
+    ctx.stroke();
+
+    for (let i = 0; i < cloth.points.length; i++) {
+      const point = cloth.points[i];
+      const btn = buttons[i];
+      if (!btn) continue;
+      const w = btn.offsetWidth * devicePixelRatio;
+      const h = btn.offsetHeight * devicePixelRatio;
+      try {
+        const transform = ctx.drawElementImage(btn, point.x - w / 2, point.y - h / 2);
+        btn.style.transform = transform.toString();
+      } catch {}
+    }
+  };
+
+  new ResizeObserver(([entry]) => {
+    const box = entry.devicePixelContentBoxSize[0];
+    setBackingSize(box.inlineSize, box.blockSize);
+  }).observe(canvas, { box: "device-pixel-content-box" });
+
+  function tick() {
+    if (cloth) cloth.update(0.016);
+    canvas.requestPaint();
+    requestAnimationFrame(tick);
+  }
+  tick();
+</script>

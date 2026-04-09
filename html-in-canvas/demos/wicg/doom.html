@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>HTML Doom — Raycaster with HTML-in-Canvas Textures</title>
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    font-family: system-ui, sans-serif;
+    overflow: hidden;
+  }
+
+  #game {
+    width: min(960px, 100vw);
+    aspect-ratio: 16 / 10;
+    image-rendering: pixelated;
+    display: block;
+  }
+
+  .tex-canvas {
+    width: 128px;
+    height: 128px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .tex {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: system-ui, sans-serif;
+    box-sizing: border-box;
+  }
+
+  .tex-checks {
+    background: #0a0f0a;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 2px;
+    padding: 6px;
+    align-content: start;
+
+    & label {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      color: #4ade80;
+      font: 9px "Courier New", monospace;
+    }
+
+    & input { accent-color: #22c55e; width: 12px; height: 12px; }
+  }
+
+  .tex-buttons {
+    background: #1e1b4b;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 8px;
+    align-content: start;
+
+    & button {
+      padding: 6px 4px;
+      border: none;
+      border-radius: 4px;
+      font: bold 9px system-ui;
+      color: white;
+      cursor: pointer;
+    }
+  }
+
+  .tex-code {
+    background: #1e1e2e;
+    padding: 10px;
+    font: 10px/1.5 "Courier New", monospace;
+    color: #cdd6f4;
+    white-space: pre-wrap;
+
+    & .kw { color: #cba6f7; }
+    & .fn { color: #89b4fa; }
+    & .str { color: #a6e3a1; }
+    & .cm { color: #585b70; }
+    & .num { color: #fab387; }
+  }
+
+  .tex-sliders {
+    background: #0c0a09;
+    display: grid;
+    gap: 6px;
+    padding: 12px;
+    align-content: start;
+
+    & label {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 6px;
+      align-items: center;
+      color: #f59e0b;
+      font: 10px system-ui;
+    }
+
+    & input[type="range"] {
+      width: 100%;
+      accent-color: #f59e0b;
+      height: 8px;
+    }
+  }
+
+  .tex-form {
+    background: #0f172a;
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    align-content: start;
+    color: #94a3b8;
+    font-size: 10px;
+
+    & h3 { color: #e2e8f0; font-size: 13px; margin: 0; }
+
+    & input {
+      width: 100%;
+      padding: 6px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 3px;
+      color: #e2e8f0;
+      font: inherit;
+    }
+
+    & button {
+      padding: 7px;
+      background: #3b82f6;
+      border: none;
+      border-radius: 3px;
+      color: white;
+      font: bold 10px system-ui;
+    }
+  }
+
+  .tex-gradient {
+    background: conic-gradient(from 45deg, #f43f5e, #a855f7, #3b82f6, #22d3ee, #22c55e, #eab308, #f43f5e);
+  }
+
+  .tex-table {
+    background: #111827;
+    padding: 4px;
+
+    & table {
+      width: 100%;
+      border-collapse: collapse;
+      font: 9px "Courier New", monospace;
+      color: #d1d5db;
+    }
+
+    & th {
+      background: #1f2937;
+      color: #60a5fa;
+      padding: 4px 3px;
+      text-align: left;
+      border-bottom: 1px solid #374151;
+    }
+
+    & td {
+      padding: 3px;
+      border-bottom: 1px solid #1f2937;
+    }
+
+    & tr:nth-child(even) td { background: rgb(255 255 255 / 3%); }
+  }
+
+  .tex-danger {
+    background: repeating-linear-gradient(
+      45deg,
+      #1a0000 0px, #1a0000 20px,
+      #2a0000 20px, #2a0000 40px
+    );
+    display: grid;
+    place-items: center;
+    color: #ef4444;
+    text-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+
+    & .warn-text {
+      font: bold 28px system-ui;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      border: 3px solid #ef4444;
+      padding: 8px 16px;
+    }
+  }
+
+  #overlay {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.8);
+    color: #e2e8f0;
+    font-size: 20px;
+    z-index: 10;
+    cursor: pointer;
+    line-height: 1.6;
+
+    & small { color: #94a3b8; font-size: 14px; }
+  }
+
+  #overlay.hidden { display: none; }
+</style>
+
+<div id="tex-container"></div>
+<canvas id="game"></canvas>
+<div id="overlay">Click to play<br><small>WASD move · Mouse look · Click shoot</small></div>
+
+<script>
+  const TEX_SIZE = 128;
+  const W = 640;
+  const H = 400;
+  const TEX_COUNT = 8;
+
+  const MAP = [
+    [8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8],
+    [8,0,0,0,0,8,0,0,0,0,8,0,0,0,0,8],
+    [8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8],
+    [8,0,0,1,1,0,0,0,0,0,0,3,3,0,0,8],
+    [8,0,0,1,0,0,0,0,0,0,0,0,3,0,0,8],
+    [8,8,0,0,0,0,0,2,2,0,0,0,0,0,8,8],
+    [8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8],
+    [8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8],
+    [8,0,0,5,5,0,0,0,0,0,0,4,4,0,0,8],
+    [8,0,0,5,0,0,0,6,6,0,0,0,4,0,0,8],
+    [8,0,0,0,0,0,0,6,0,0,0,0,0,0,0,8],
+    [8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8],
+    [8,0,0,7,0,0,0,0,0,0,0,0,7,0,0,8],
+    [8,0,0,7,0,0,0,0,0,0,0,0,7,0,0,8],
+    [8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8],
+    [8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8],
+  ];
+
+  let posX = 8.5, posY = 14.5;
+  let dirX = 0, dirY = -1;
+  let planeX = 0.66, planeY = 0;
+
+  const keys = {};
+  const moveSpeed = 0.06;
+  const rotSpeed = 0.04;
+  let shootFlash = 0;
+
+  // ─── Texture generation ──────────────────────────────────────
+  const texContainer = document.getElementById("tex-container");
+
+  function el(tag, attrs, ...children) {
+    const e = document.createElement(tag);
+    if (attrs) for (const [k, v] of Object.entries(attrs)) {
+      if (k === "text") { e.textContent = v; continue; }
+      if (k === "html") { e.innerHTML = v; continue; }
+      e.setAttribute(k, v);
+    }
+    for (const c of children) {
+      if (typeof c === "string") e.appendChild(document.createTextNode(c));
+      else e.appendChild(c);
+    }
+    return e;
+  }
+
+  function buildTextures() {
+    const t1 = el("div", { class: "tex tex-checks", id: "t1" });
+    for (let i = 0; i < 36; i++) {
+      const label = el("label", null,
+        el("input", { type: "checkbox", ...(Math.random() > 0.5 ? { checked: "" } : {}) }),
+        `SYS_${String(i).padStart(2, "0")}`
+      );
+      t1.appendChild(label);
+    }
+
+    const btnColors = ["#ef4444","#f59e0b","#22c55e","#3b82f6","#8b5cf6","#ec4899",
+                        "#06b6d4","#f97316","#14b8a6","#e11d48","#6366f1","#84cc16"];
+    const btnLabels = ["ARM","FIRE","LOCK","SCAN","PING","SYNC",
+                        "HALT","DUMP","WIPE","INIT","BOOT","KILL"];
+    const t2 = el("div", { class: "tex tex-buttons", id: "t2" });
+    btnLabels.forEach((lbl, i) => {
+      t2.appendChild(el("button", { style: `background:${btnColors[i]}`, text: lbl }));
+    });
+
+    const t3 = el("div", { class: "tex tex-code", id: "t3", html:
+      `<span class="cm">// doom.js</span>\n` +
+      `<span class="kw">function</span> <span class="fn">castRay</span>(x, y) {\n` +
+      `  <span class="kw">let</span> dist = <span class="num">0</span>;\n` +
+      `  <span class="kw">while</span> (dist < <span class="num">20</span>) {\n` +
+      `    <span class="kw">if</span> (map[y][x] > <span class="num">0</span>)\n` +
+      `      <span class="kw">return</span> { hit: <span class="num">true</span> };\n` +
+      `    dist += <span class="num">0.1</span>;\n` +
+      `  }\n` +
+      `  <span class="kw">return</span> { hit: <span class="num">false</span> };\n` +
+      `}\n\n` +
+      `<span class="kw">const</span> tex = <span class="str">"html"</span>;\n` +
+      `<span class="fn">render</span>(scene, tex);`
+    });
+
+    const t4 = el("div", { class: "tex tex-sliders", id: "t4" });
+    ["FREQ","GAIN","PHASE","DRIFT","DECAY","BIAS","AMP","RATE"].forEach((lbl, i) => {
+      const label = el("label", null, lbl, el("input", { type: "range", value: String(20 + Math.random() * 60) }));
+      t4.appendChild(label);
+    });
+
+    const t5 = el("div", { class: "tex tex-form", id: "t5" });
+    t5.appendChild(el("h3", { text: "SECURE LOGIN" }));
+    t5.appendChild(el("label", { text: "Agent ID" }));
+    t5.appendChild(el("input", { type: "text", placeholder: "Enter ID..." }));
+    t5.appendChild(el("label", { text: "Passcode" }));
+    t5.appendChild(el("input", { type: "password", placeholder: "••••••" }));
+    t5.appendChild(el("button", { text: "AUTHENTICATE" }));
+
+    const t6 = el("div", { class: "tex tex-gradient", id: "t6" });
+
+    const t7 = el("div", { class: "tex tex-table", id: "t7" });
+    const table = el("table");
+    const thead = el("tr");
+    ["ID","NODE","STATUS","PING"].forEach(h => thead.appendChild(el("th", { text: h })));
+    table.appendChild(thead);
+    for (let r = 0; r < 12; r++) {
+      const tr = el("tr");
+      tr.appendChild(el("td", { text: String(r + 1).padStart(3, "0") }));
+      tr.appendChild(el("td", { text: `SRV-${String.fromCharCode(65 + r)}` }));
+      tr.appendChild(el("td", { text: r % 3 === 0 ? "DOWN" : "OK", style: r % 3 === 0 ? "color:#ef4444" : "color:#4ade80" }));
+      tr.appendChild(el("td", { text: `${Math.floor(Math.random() * 200)}ms` }));
+      table.appendChild(tr);
+    }
+    t7.appendChild(table);
+
+    const t8 = el("div", { class: "tex tex-danger", id: "t8" });
+    t8.appendChild(el("div", { class: "warn-text", text: "DANGER" }));
+
+    return [t1, t2, t3, t4, t5, t6, t7, t8];
+  }
+
+  const textureDivs = buildTextures();
+  const texCanvases = [];
+  const textures = [];
+  const texElements = [];
+  let capturedCount = 0;
+  const dirtyTextures = new Set();
+
+  textureDivs.forEach((div, i) => {
+    const tc = document.createElement("canvas");
+    tc.className = "tex-canvas";
+    tc.setAttribute("layoutsubtree", "");
+    tc.width = TEX_SIZE;
+    tc.height = TEX_SIZE;
+    tc.appendChild(div);
+    texContainer.appendChild(tc);
+    texCanvases.push(tc);
+    texElements.push(div);
+
+    const offscreen = document.createElement("canvas");
+    offscreen.width = TEX_SIZE;
+    offscreen.height = TEX_SIZE;
+    textures.push(offscreen);
+
+    const tcCtx = tc.getContext("2d");
+    const offCtx = offscreen.getContext("2d");
+
+    tc.onpaint = () => {
+      tcCtx.reset();
+      try {
+        tcCtx.drawElementImage(div, 0, 0, TEX_SIZE, TEX_SIZE);
+      } catch { return; }
+      offCtx.clearRect(0, 0, TEX_SIZE, TEX_SIZE);
+      offCtx.drawImage(tc, 0, 0);
+      if (capturedCount < TEX_COUNT) capturedCount++;
+    };
+
+    tc.requestPaint();
+  });
+
+  function texturesCaptured() { return capturedCount >= TEX_COUNT; }
+
+  // ─── Game canvas ─────────────────────────────────────────────
+  const game = document.getElementById("game");
+  const ctx = game.getContext("2d");
+  game.width = W;
+  game.height = H;
+
+  // ─── Raycaster ───────────────────────────────────────────────
+  function castRay(rayDirX, rayDirY) {
+    let mapX = Math.floor(posX);
+    let mapY = Math.floor(posY);
+
+    const ddx = Math.abs(1 / rayDirX);
+    const ddy = Math.abs(1 / rayDirY);
+
+    let stepX, stepY, sideDistX, sideDistY;
+
+    if (rayDirX < 0) { stepX = -1; sideDistX = (posX - mapX) * ddx; }
+    else              { stepX =  1; sideDistX = (mapX + 1 - posX) * ddx; }
+    if (rayDirY < 0) { stepY = -1; sideDistY = (posY - mapY) * ddy; }
+    else              { stepY =  1; sideDistY = (mapY + 1 - posY) * ddy; }
+
+    let side = 0;
+    for (let i = 0; i < 64; i++) {
+      if (sideDistX < sideDistY) { sideDistX += ddx; mapX += stepX; side = 0; }
+      else                        { sideDistY += ddy; mapY += stepY; side = 1; }
+      if (mapY >= 0 && mapY < MAP.length && mapX >= 0 && mapX < MAP[0].length && MAP[mapY][mapX] > 0) {
+        const dist = side === 0 ? sideDistX - ddx : sideDistY - ddy;
+        let wallX = side === 0 ? posY + dist * rayDirY : posX + dist * rayDirX;
+        wallX -= Math.floor(wallX);
+        let texX = Math.floor(wallX * TEX_SIZE);
+        if (side === 0 && rayDirX > 0) texX = TEX_SIZE - texX - 1;
+        if (side === 1 && rayDirY < 0) texX = TEX_SIZE - texX - 1;
+        return { dist, side, mapX, mapY, wallX, texX, texId: MAP[mapY][mapX] };
+      }
+    }
+    return null;
+  }
+
+  // ─── Renderer ────────────────────────────────────────────────
+  const floorGrad = ctx.createLinearGradient(0, H / 2, 0, H);
+  floorGrad.addColorStop(0, "#1a1a2e");
+  floorGrad.addColorStop(1, "#2d1b4e");
+
+  const ceilGrad = ctx.createLinearGradient(0, 0, 0, H / 2);
+  ceilGrad.addColorStop(0, "#0a0a12");
+  ceilGrad.addColorStop(1, "#12121f");
+
+  function render() {
+    ctx.fillStyle = ceilGrad;
+    ctx.fillRect(0, 0, W, H / 2);
+    ctx.fillStyle = floorGrad;
+    ctx.fillRect(0, H / 2, W, H / 2);
+
+    ctx.imageSmoothingEnabled = false;
+
+    for (let x = 0; x < W; x++) {
+      const camX = 2 * x / W - 1;
+      const rdx = dirX + planeX * camX;
+      const rdy = dirY + planeY * camX;
+      const hit = castRay(rdx, rdy);
+      if (!hit) continue;
+
+      const lineH = Math.floor(H / hit.dist);
+      const drawStart = Math.max(0, Math.floor((H - lineH) / 2));
+      const drawEnd = Math.min(H, Math.floor((H + lineH) / 2));
+      const drawH = drawEnd - drawStart;
+
+      const tex = textures[hit.texId - 1];
+      if (tex) {
+        ctx.drawImage(tex, hit.texX, 0, 1, TEX_SIZE, x, drawStart, 1, drawH);
+      }
+
+      if (hit.side === 1) {
+        ctx.fillStyle = "rgba(0,0,0,0.3)";
+        ctx.fillRect(x, drawStart, 1, drawH);
+      }
+    }
+
+    if (shootFlash > 0) {
+      ctx.fillStyle = `rgba(255,200,100,${shootFlash * 0.15})`;
+      ctx.fillRect(0, 0, W, H);
+      shootFlash -= 0.15;
+    }
+
+    drawCrosshair();
+    drawMinimap();
+  }
+
+  function drawCrosshair() {
+    const cx = W / 2, cy = H / 2;
+    ctx.strokeStyle = "rgba(255,255,255,0.7)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - 8, cy); ctx.lineTo(cx - 3, cy);
+    ctx.moveTo(cx + 3, cy); ctx.lineTo(cx + 8, cy);
+    ctx.moveTo(cx, cy - 8); ctx.lineTo(cx, cy - 3);
+    ctx.moveTo(cx, cy + 3); ctx.lineTo(cx, cy + 8);
+    ctx.stroke();
+  }
+
+  function drawMinimap() {
+    const scale = 5;
+    const ox = 8, oy = 8;
+    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = "#000";
+    ctx.fillRect(ox - 2, oy - 2, MAP[0].length * scale + 4, MAP.length * scale + 4);
+
+    const colors = [null, "#4ade80", "#818cf8", "#cdd6f4", "#f59e0b", "#3b82f6", "#f43f5e", "#d1d5db", "#ef4444"];
+    for (let y = 0; y < MAP.length; y++) {
+      for (let x = 0; x < MAP[0].length; x++) {
+        const v = MAP[y][x];
+        ctx.fillStyle = v > 0 ? (colors[v] || "#666") : "#1a1a2e";
+        ctx.fillRect(ox + x * scale, oy + y * scale, scale, scale);
+      }
+    }
+
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(ox + posX * scale - 1.5, oy + posY * scale - 1.5, 3, 3);
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(ox + posX * scale, oy + posY * scale);
+    ctx.lineTo(ox + (posX + dirX * 1.5) * scale, oy + (posY + dirY * 1.5) * scale);
+    ctx.stroke();
+
+    ctx.globalAlpha = 1;
+  }
+
+  // ─── Shooting + interaction ──────────────────────────────────
+  function shoot() {
+    shootFlash = 1;
+    const hit = castRay(dirX, dirY);
+    if (!hit) return;
+
+    const texIdx = hit.texId - 1;
+
+    if (hit.texId === 1) {
+      const checkboxes = texElements[0]?.querySelectorAll("input[type='checkbox']");
+      if (checkboxes) {
+        const idx = Math.min(35, Math.floor(Math.random() * 36));
+        if (checkboxes[idx]) {
+          checkboxes[idx].checked = !checkboxes[idx].checked;
+          texCanvases[0].requestPaint();
+        }
+      }
+    } else if (hit.texId === 2) {
+      const buttons = texElements[1]?.querySelectorAll("button");
+      if (buttons) {
+        const idx = Math.floor(hit.wallX * 3);
+        const btn = buttons[Math.min(idx, buttons.length - 1)];
+        if (btn) {
+          const orig = btn.textContent;
+          btn.textContent = "HIT!";
+          btn.style.background = "#fff";
+          btn.style.color = "#000";
+          texCanvases[1].requestPaint();
+          setTimeout(() => {
+            btn.textContent = orig;
+            btn.style.background = "";
+            btn.style.color = "";
+            texCanvases[1].requestPaint();
+          }, 300);
+        }
+      }
+    }
+  }
+
+  // ─── Input ───────────────────────────────────────────────────
+  const overlay = document.getElementById("overlay");
+
+  document.addEventListener("keydown", (e) => { keys[e.code] = true; });
+  document.addEventListener("keyup", (e) => { keys[e.code] = false; });
+
+  document.addEventListener("mousemove", (e) => {
+    if (document.pointerLockElement !== game) return;
+    const sensitivity = 0.002;
+    const angle = -e.movementX * sensitivity;
+    const oldDirX = dirX, oldPlaneX = planeX;
+    dirX = dirX * Math.cos(angle) - dirY * Math.sin(angle);
+    dirY = oldDirX * Math.sin(angle) + dirY * Math.cos(angle);
+    planeX = planeX * Math.cos(angle) - planeY * Math.sin(angle);
+    planeY = oldPlaneX * Math.sin(angle) + planeY * Math.cos(angle);
+  });
+
+  overlay.addEventListener("click", () => {
+    game.requestPointerLock();
+  });
+
+  game.addEventListener("click", () => {
+    if (document.pointerLockElement === game) {
+      shoot();
+    } else {
+      game.requestPointerLock();
+    }
+  });
+
+  document.addEventListener("pointerlockchange", () => {
+    overlay.classList.toggle("hidden", document.pointerLockElement === game);
+  });
+
+  function updateMovement() {
+    const ms = moveSpeed;
+    let mx = 0, my = 0;
+    if (keys["KeyW"]) { mx += dirX * ms; my += dirY * ms; }
+    if (keys["KeyS"]) { mx -= dirX * ms; my -= dirY * ms; }
+    if (keys["KeyA"]) { mx += dirY * ms; my -= dirX * ms; }
+    if (keys["KeyD"]) { mx -= dirY * ms; my += dirX * ms; }
+
+    const margin = 0.15;
+    const newX = posX + mx;
+    const newY = posY + my;
+
+    if (MAP[Math.floor(posY)][Math.floor(newX + margin * Math.sign(mx))] === 0) posX = newX;
+    if (MAP[Math.floor(newY + margin * Math.sign(my))][Math.floor(posX)] === 0) posY = newY;
+
+    if (keys["ArrowLeft"])  {
+      const a = rotSpeed;
+      const od = dirX, op = planeX;
+      dirX = dirX * Math.cos(a) - dirY * Math.sin(a);
+      dirY = od * Math.sin(a) + dirY * Math.cos(a);
+      planeX = planeX * Math.cos(a) - planeY * Math.sin(a);
+      planeY = op * Math.sin(a) + planeY * Math.cos(a);
+    }
+    if (keys["ArrowRight"]) {
+      const a = -rotSpeed;
+      const od = dirX, op = planeX;
+      dirX = dirX * Math.cos(a) - dirY * Math.sin(a);
+      dirY = od * Math.sin(a) + dirY * Math.cos(a);
+      planeX = planeX * Math.cos(a) - planeY * Math.sin(a);
+      planeY = op * Math.sin(a) + planeY * Math.cos(a);
+    }
+  }
+
+  // ─── Game loop ───────────────────────────────────────────────
+  function tick() {
+    updateMovement();
+    render();
+    requestAnimationFrame(tick);
+  }
+
+  function waitForTextures() {
+    if (texturesCaptured()) {
+      requestAnimationFrame(tick);
+    } else {
+      requestAnimationFrame(waitForTextures);
+    }
+  }
+  waitForTextures();
+</script>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>Glitch Text on Hover</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+  rel="stylesheet"
+/>
+
+<style>
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: #0a0a0a;
+    font-family: "Space Grotesk", system-ui, sans-serif;
+  }
+
+  canvas {
+    display: block;
+    width: min(920px, 94vw);
+    aspect-ratio: 16 / 9;
+    cursor: crosshair;
+    overflow: clip;
+    border-radius: 4px;
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 6%), 0 24px 80px rgb(0 0 0 / 55%);
+  }
+
+  #content {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(8px, 2vw, 18px);
+    padding: clamp(24px, 4vw, 48px);
+    background: #0a0a0a;
+    color: #fafafa;
+    text-align: center;
+  }
+
+  #content h1 {
+    margin: 0;
+    font-family: "Archivo Black", "Space Grotesk", sans-serif;
+    font-weight: 400;
+    font-size: clamp(28px, 7vw, 72px);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    text-shadow: 0 0 40px rgb(255 255 255 / 8%);
+  }
+
+  #content .sub {
+    margin: 0;
+    font-size: clamp(13px, 2vw, 18px);
+    font-weight: 500;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 45%);
+  }
+
+  #content .line {
+    margin: 0;
+    font-size: clamp(15px, 2.2vw, 22px);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    max-width: 38ch;
+  }
+
+  #content .line.muted {
+    font-weight: 400;
+    font-size: clamp(13px, 1.8vw, 17px);
+    color: rgb(255 255 255 / 55%);
+  }
+
+  #content .accent {
+    color: #22d3ee;
+    font-weight: 700;
+  }
+
+  #content .accent2 {
+    color: #e879f9;
+    font-weight: 600;
+  }
+</style>
+
+<canvas id="c" layoutsubtree>
+  <div id="content">
+    <h1>BREAK THE INTERNET</h1>
+    <p class="sub">hover to corrupt</p>
+    <p class="line">Signal integrity <span class="accent">unstable</span> — packets leaking at the edges.</p>
+    <p class="line muted">HTML-in-canvas snapshot → <span class="accent2">datamosh</span> in 2D.</p>
+  </div>
+</canvas>
+
+<script>
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+  const content = document.getElementById("content");
+  const off = document.createElement("canvas");
+  const offCtx = off.getContext("2d");
+
+  let hovering = false;
+  let mx = 0;
+  let my = 0;
+
+  /** @type {{ y0: number; h: number; offset: number }[]} */
+  let stripLayout = [];
+  let glitchFrame = 0;
+  let nextRegenAt = 0;
+  let chromAlpha = 0.34;
+  let chromSplit = 4;
+  /** @type {{ sx: number; sy: number; sw: number; sh: number; dx: number; dy: number }[]} */
+  let blockRects = [];
+  /** @type {{ y: number; bright: boolean }[]} */
+  let scanlines = [];
+
+  function pointerIntensity() {
+    const w = canvas.width;
+    const h = canvas.height;
+    const cx = w / 2;
+    const cy = h / 2;
+    const dx = mx - cx;
+    const dy = my - cy;
+    const maxDist = Math.hypot(cx, cy) || 1;
+    const dist = Math.hypot(dx, dy);
+    const t = 1 - Math.min(1, dist / maxDist);
+    return Math.pow(t, 1.15);
+  }
+
+  function regenerateStripLayout(h) {
+    stripLayout = [];
+    let y = 0;
+    while (y < h) {
+      const stripH = 2 + Math.random() * 18;
+      const hClip = Math.min(stripH, h - y);
+      const roll = Math.random();
+      const base = 5 + Math.random() * 25;
+      const offset =
+        roll < 0.42 ? (Math.random() < 0.5 ? -1 : 1) * base : roll < 0.58 ? (Math.random() - 0.5) * base * 0.5 : 0;
+      stripLayout.push({ y0: y, h: hClip, offset });
+      y += hClip;
+    }
+  }
+
+  function regenerateGlitchState(w, h) {
+    regenerateStripLayout(h);
+    chromAlpha = 0.26 + Math.random() * 0.14;
+    chromSplit = 3 + Math.random() * 5;
+    blockRects = [];
+    const maxBlocks = Math.floor(2 + Math.random() * 7);
+    for (let b = 0; b < maxBlocks; b++) {
+      if (Math.random() > 0.55) continue;
+      const sw = 12 + Math.random() * 80;
+      const sh = 4 + Math.random() * 26;
+      const sx = Math.random() * Math.max(1, w - sw);
+      const sy = Math.random() * Math.max(1, h - sh);
+      const dx = Math.random() * Math.max(1, w - sw);
+      const dy = Math.random() * Math.max(1, h - sh);
+      blockRects.push({ sx, sy, sw, sh, dx, dy });
+    }
+    scanlines = [];
+    const lines = 5 + Math.floor(Math.random() * 18);
+    for (let i = 0; i < lines; i++) {
+      scanlines.push({ y: Math.random() * h, bright: Math.random() < 0.5 });
+    }
+  }
+
+  function maybeAdvanceGlitchState(w, h) {
+    glitchFrame++;
+    if (glitchFrame >= nextRegenAt || stripLayout.length === 0) {
+      regenerateGlitchState(w, h);
+      nextRegenAt = glitchFrame + 2 + (Math.random() < 0.5 ? 1 : 2);
+    }
+  }
+
+  function applyGlitchFromSnapshot(w, h) {
+    const intensity = pointerIntensity();
+    maybeAdvanceGlitchState(w, h);
+
+    offCtx.setTransform(1, 0, 0, 1, 0, 0);
+    offCtx.drawImage(canvas, 0, 0, w, h);
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over";
+    ctx.filter = "none";
+
+    for (const strip of stripLayout) {
+      const { y0, h: sh, offset } = strip;
+      const ox = offset * intensity;
+      ctx.drawImage(off, 0, y0, w, sh, ox, y0, w, sh);
+    }
+
+    const split = chromSplit * intensity;
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = chromAlpha * intensity;
+    ctx.filter = `drop-shadow(${-split}px 0 0 rgba(255,0,200,${0.45 + 0.2 * intensity})) drop-shadow(${split}px 0 0 rgba(0,255,255,${0.45 + 0.2 * intensity}))`;
+    ctx.drawImage(off, 0, 0);
+    ctx.restore();
+
+    for (const br of blockRects) {
+      const { sx, sy, sw, sh, dx, dy } = br;
+      ctx.drawImage(off, sx, sy, sw, sh, dx, dy, sw, sh);
+    }
+
+    for (const sl of scanlines) {
+      const { y, bright } = sl;
+      ctx.fillStyle = bright ? `rgba(255,255,255,${0.07 + 0.18 * intensity})` : `rgba(0,0,0,${0.14 + 0.32 * intensity})`;
+      ctx.fillRect(0, Math.floor(y), w, 1);
+    }
+
+    ctx.globalCompositeOperation = "source-over";
+    ctx.filter = "none";
+    ctx.globalAlpha = 1;
+  }
+
+  canvas.onpaint = () => {
+    ctx.reset();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const w = canvas.width;
+    const h = canvas.height;
+
+    if (w < 1 || h < 1) return;
+
+    if (off.width !== w || off.height !== h) {
+      off.width = w;
+      off.height = h;
+    }
+
+    try {
+      const transform = ctx.drawElementImage(content, 0, 0, w, h);
+      content.style.transform = transform.toString();
+    } catch {
+      return;
+    }
+
+    if (!hovering) {
+      return;
+    }
+
+    applyGlitchFromSnapshot(w, h);
+  };
+
+  canvas.addEventListener("pointerenter", () => {
+    hovering = true;
+  });
+  canvas.addEventListener("pointerleave", () => {
+    hovering = false;
+    stripLayout = [];
+    blockRects = [];
+    scanlines = [];
+    glitchFrame = 0;
+    nextRegenAt = 0;
+    canvas.requestPaint();
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    const r = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / r.width;
+    const scaleY = canvas.height / r.height;
+    mx = (e.clientX - r.left) * scaleX;
+    my = (e.clientY - r.top) * scaleY;
+  });
+
+  new ResizeObserver(([entry]) => {
+    const box = entry.devicePixelContentBoxSize[0];
+    canvas.width = box.inlineSize;
+    canvas.height = box.blockSize;
+    canvas.requestPaint();
+  }).observe(canvas, { box: "device-pixel-content-box" });
+
+  function tick() {
+    canvas.requestPaint();
+    requestAnimationFrame(tick);
+  }
+  tick();
+</script>

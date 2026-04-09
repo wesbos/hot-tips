@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap"
+  rel="stylesheet"
+/>
+
+<style>
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 16px;
+    padding: 24px;
+    background:
+      radial-gradient(ellipse 90% 70% at 50% -10%, #ffffff 0%, transparent 55%),
+      linear-gradient(165deg, #fffdf8 0%, #f7f0e4 42%, #ffffff 100%);
+    font-family: "DM Sans", system-ui, sans-serif;
+  }
+
+  canvas {
+    display: block;
+    width: min(420px, 94vw);
+    min-height: 420px;
+    border-radius: 16px;
+    background: transparent;
+    overflow: clip;
+    cursor: default;
+    touch-action: manipulation;
+  }
+
+  #content {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: linear-gradient(165deg, #f8fafc 0%, #f1f5f9 100%);
+    min-height: 420px;
+  }
+
+  .todo-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+  }
+
+  .todo-card .check {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 2px solid #cbd5e1;
+    flex-shrink: 0;
+  }
+
+  .todo-card .label {
+    flex: 1;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #1e293b;
+    line-height: 1.3;
+  }
+
+  .todo-card .tag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 8px;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  .tag-work { background: #dbeafe; color: #1e40af; }
+  .tag-personal { background: #fce7f3; color: #9d174d; }
+  .tag-urgent { background: #fee2e2; color: #991b1b; }
+  .tag-idea { background: #fef9c3; color: #854d0e; }
+  .tag-health { background: #d1fae5; color: #065f46; }
+
+  .todo-card .btn-delete {
+    pointer-events: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    color: #ef4444;
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .btn-add {
+    pointer-events: none;
+    width: 100%;
+    padding: 13px 18px;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    background: transparent;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    text-align: center;
+  }
+</style>
+
+<canvas layoutsubtree>
+  <div id="content"></div>
+</canvas>
+
+<script>
+  const canvas = document.querySelector("canvas");
+  const ctx = canvas.getContext("2d");
+  const content = document.getElementById("content");
+
+  const TILE_COLS = 14;
+  const TILE_ROWS = 4;
+  const GRAVITY = 1400;
+  const DRAG = 0.985;
+
+  const CARD_DATA = [
+    { text: "Review pull request from Sarah", tag: "work" },
+    { text: "Book dentist appointment", tag: "personal" },
+    { text: "Deploy hotfix to production", tag: "urgent" },
+    { text: "Podcast app for running", tag: "idea" },
+    { text: "Morning run — 5km", tag: "health" },
+  ];
+
+  const EXTRA_CARDS = [
+    { text: "Write unit tests for auth module", tag: "work" },
+    { text: "Grocery shopping — meal prep Sunday", tag: "personal" },
+    { text: "Sketch wireframes for dashboard", tag: "idea" },
+    { text: "Fix memory leak in WebSocket handler", tag: "urgent" },
+    { text: "Stretch & yoga — 20 min", tag: "health" },
+    { text: "Update dependencies to latest", tag: "work" },
+    { text: "Call mom this weekend", tag: "personal" },
+    { text: "Benchmark new query optimizer", tag: "idea" },
+  ];
+  let extraIndex = 0;
+
+  let cards = [...CARD_DATA];
+
+  let animations = [];
+  let lastTime = performance.now();
+
+  function makeCardHTML(card, index) {
+    return `<div class="todo-card" data-idx="${index}">
+      <div class="check"></div>
+      <span class="label">${card.text}</span>
+      <span class="tag tag-${card.tag}">${card.tag}</span>
+      <button class="btn-delete" data-idx="${index}" type="button">×</button>
+    </div>`;
+  }
+
+  function renderCards() {
+    content.innerHTML =
+      cards.map((c, i) => makeCardHTML(c, i)).join("") +
+      `<button class="btn-add" id="btn-add" type="button">+ Add card</button>`;
+    canvas.requestPaint();
+  }
+
+  function makeSnapshotSurface(w, h) {
+    if (typeof OffscreenCanvas !== "undefined") return new OffscreenCanvas(w, h);
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    return c;
+  }
+
+  function getCardRect(index) {
+    const el = content.querySelector(`.todo-card[data-idx="${index}"]`);
+    if (!el) return null;
+    const cRect = canvas.getBoundingClientRect();
+    const eRect = el.getBoundingClientRect();
+    const dpr = devicePixelRatio;
+    return {
+      x: (eRect.left - cRect.left) * dpr,
+      y: (eRect.top - cRect.top) * dpr,
+      w: eRect.width * dpr,
+      h: eRect.height * dpr,
+    };
+  }
+
+  function snapshotCardRegion(rect) {
+    const snap = makeSnapshotSurface(rect.w, rect.h);
+    const sctx = snap.getContext("2d");
+    sctx.drawImage(canvas, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);
+    return snap;
+  }
+
+  function buildDeleteParticles(rect, snap) {
+    const tileW = rect.w / TILE_COLS;
+    const tileH = rect.h / TILE_ROWS;
+    const cx = rect.x + rect.w / 2;
+    const cy = rect.y + rect.h / 2;
+    const particles = [];
+
+    for (let row = 0; row < TILE_ROWS; row++) {
+      for (let col = 0; col < TILE_COLS; col++) {
+        const sx = col * tileW;
+        const sy = row * tileH;
+        const px = rect.x + sx + tileW / 2;
+        const py = rect.y + sy + tileH / 2;
+        const dx = px - cx;
+        const dy = py - cy;
+        const dist = Math.hypot(dx, dy) || 1;
+        const speed = 280 + Math.random() * 350;
+        particles.push({
+          sx, sy, sw: tileW, sh: tileH,
+          x: px, y: py,
+          vx: (dx / dist) * speed + (Math.random() - 0.5) * 200,
+          vy: (dy / dist) * speed - 300 + (Math.random() - 0.5) * 200,
+          rot: 0,
+          vr: (Math.random() - 0.5) * 12,
+          alpha: 1,
+        });
+      }
+    }
+
+    return { type: "delete", snap, particles, age: 0, duration: 1.6, rect };
+  }
+
+  function buildAddParticles(rect, snap) {
+    const tileW = rect.w / TILE_COLS;
+    const tileH = rect.h / TILE_ROWS;
+    const cx = rect.x + rect.w / 2;
+    const cy = rect.y + rect.h / 2;
+    const particles = [];
+
+    for (let row = 0; row < TILE_ROWS; row++) {
+      for (let col = 0; col < TILE_COLS; col++) {
+        const sx = col * tileW;
+        const sy = row * tileH;
+        const targetX = rect.x + sx + tileW / 2;
+        const targetY = rect.y + sy + tileH / 2;
+        const angle = Math.random() * Math.PI * 2;
+        const scatter = 300 + Math.random() * 400;
+        particles.push({
+          sx, sy, sw: tileW, sh: tileH,
+          targetX, targetY,
+          x: targetX + Math.cos(angle) * scatter,
+          y: targetY - 200 + Math.sin(angle) * scatter - Math.random() * 300,
+          rot: (Math.random() - 0.5) * Math.PI * 3,
+          alpha: 0,
+        });
+      }
+    }
+
+    return { type: "add", snap, particles, age: 0, duration: 0.8, rect, cardIndex: -1 };
+  }
+
+  function deleteCard(index) {
+    const rect = getCardRect(index);
+    if (!rect) return;
+
+    const anim = buildDeleteParticles(rect, snapshotCardRegion(rect));
+    animations.push(anim);
+
+    cards.splice(index, 1);
+    renderCards();
+  }
+
+  function addCard() {
+    const next = EXTRA_CARDS[extraIndex % EXTRA_CARDS.length];
+    extraIndex++;
+    cards.push(next);
+    renderCards();
+
+    requestAnimationFrame(() => {
+      const newIdx = cards.length - 1;
+      const rect = getCardRect(newIdx);
+      if (!rect) return;
+
+      pendingAddCapture = { rect, cardIndex: newIdx };
+      canvas.requestPaint();
+    });
+  }
+
+  let pendingAddCapture = null;
+
+  function clientPointInCanvasRect(clientX, clientY, el) {
+    if (!el) return false;
+    const cRect = canvas.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    return (
+      clientX >= r.left && clientX <= r.right &&
+      clientY >= r.top && clientY <= r.bottom &&
+      clientX >= cRect.left && clientX <= cRect.right &&
+      clientY >= cRect.top && clientY <= cRect.bottom
+    );
+  }
+
+  canvas.addEventListener("click", (e) => {
+    const addBtn = document.getElementById("btn-add");
+    if (addBtn && clientPointInCanvasRect(e.clientX, e.clientY, addBtn)) {
+      e.preventDefault();
+      addCard();
+      return;
+    }
+
+    for (let i = cards.length - 1; i >= 0; i--) {
+      const del = content.querySelector(`.btn-delete[data-idx="${i}"]`);
+      if (del && clientPointInCanvasRect(e.clientX, e.clientY, del)) {
+        e.preventDefault();
+        deleteCard(i);
+        return;
+      }
+    }
+  }, true);
+
+  canvas.onpaint = () => {
+    const now = performance.now();
+    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    lastTime = now;
+
+    const w = canvas.width;
+    const h = canvas.height;
+
+    ctx.reset();
+    ctx.clearRect(0, 0, w, h);
+
+    try {
+      const transform = ctx.drawElementImage(content, 0, 0, w, h);
+      content.style.transform = transform.toString();
+    } catch { return; }
+
+    if (pendingAddCapture) {
+      const { rect, cardIndex } = pendingAddCapture;
+      pendingAddCapture = null;
+      const snap = snapshotCardRegion(rect);
+      const anim = buildAddParticles(rect, snap);
+      anim.cardIndex = cardIndex;
+      animations.push(anim);
+    }
+
+    for (let i = animations.length - 1; i >= 0; i--) {
+      const anim = animations[i];
+      anim.age += dt;
+      const t = Math.min(anim.age / anim.duration, 1);
+
+      if (anim.type === "delete") {
+        for (const p of anim.particles) {
+          p.vy += GRAVITY * dt;
+          p.vx *= DRAG;
+          p.vy *= DRAG;
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.rot += p.vr * dt;
+          p.alpha = Math.max(0, 1 - t * 1.2);
+        }
+
+        for (const p of anim.particles) {
+          if (p.alpha <= 0) continue;
+          ctx.save();
+          ctx.globalAlpha = p.alpha;
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.drawImage(anim.snap, p.sx, p.sy, p.sw, p.sh, -p.sw / 2, -p.sh / 2, p.sw, p.sh);
+          ctx.restore();
+        }
+      }
+
+      if (anim.type === "add") {
+        const ease = 1 - Math.pow(1 - t, 3);
+
+        for (const p of anim.particles) {
+          const drawX = p.x + (p.targetX - p.x) * ease;
+          const drawY = p.y + (p.targetY - p.y) * ease;
+          const drawRot = p.rot * (1 - ease);
+          const alpha = Math.min(1, ease * 1.5);
+
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.translate(drawX, drawY);
+          ctx.rotate(drawRot);
+          ctx.drawImage(anim.snap, p.sx, p.sy, p.sw, p.sh, -p.sw / 2, -p.sh / 2, p.sw, p.sh);
+          ctx.restore();
+        }
+      }
+
+      if (t >= 1) {
+        animations.splice(i, 1);
+      }
+    }
+  };
+
+  new ResizeObserver(([entry]) => {
+    const box = entry.devicePixelContentBoxSize[0];
+    canvas.width = box.inlineSize;
+    canvas.height = box.blockSize;
+    canvas.requestPaint();
+  }).observe(canvas, { box: "device-pixel-content-box" });
+
+  function tick() {
+    canvas.requestPaint();
+    requestAnimationFrame(tick);
+  }
+
+  renderCards();
+  tick();
+</script>

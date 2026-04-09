@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>Canvas Button Effects Gallery</title>
+
+<style>
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    place-content: center;
+    gap: 24px;
+    padding: 32px;
+    background: radial-gradient(circle at 30% 20%, #1e3a5f 0%, #0f172a 50%, #020617 100%);
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  header {
+    text-align: center;
+
+    & h1 {
+      margin: 0;
+      color: #e2e8f0;
+      font-size: clamp(20px, 3vw, 28px);
+      letter-spacing: -0.02em;
+    }
+
+    & p {
+      margin: 4px 0 0;
+      color: #64748b;
+      font-size: 14px;
+    }
+  }
+
+  section {
+    text-align: center;
+
+    & h2 {
+      margin: 0 0 4px;
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    & .hint {
+      margin: 0 0 10px;
+      color: #475569;
+      font-size: 12px;
+    }
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: center;
+  }
+
+  canvas {
+    border-radius: 12px;
+    border: 1px solid rgb(148 163 184 / 20%);
+    background: rgb(15 23 42 / 40%);
+    overflow: clip;
+    cursor: pointer;
+  }
+
+  .btn {
+    pointer-events: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  .btn-blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+  .btn-red { background: linear-gradient(135deg, #ef4444, #dc2626); }
+  .btn-green { background: linear-gradient(135deg, #22c55e, #16a34a); }
+  .btn-cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+  .btn-amber { background: linear-gradient(135deg, #f59e0b, #d97706); color: #1a1a1a; }
+  .btn-purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+  .btn-pink { background: linear-gradient(135deg, #ec4899, #db2777); }
+  .btn-dark { background: linear-gradient(135deg, #374151, #1f2937); }
+  .btn-gray { background: linear-gradient(135deg, #6b7280, #4b5563); }
+  .btn-emerald { background: linear-gradient(135deg, #10b981, #059669); }
+  .btn-rose { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+  .btn-outline { background: rgba(255,255,255,0.92); border: 2px solid #3b82f6; color: #2563eb; }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+
+    & button {
+      padding: 6px 16px;
+      font-size: 13px;
+      font-family: inherit;
+      border-radius: 8px;
+      border: 1px solid rgb(148 163 184 / 40%);
+      background: rgb(15 23 42 / 60%);
+      color: #cbd5e1;
+      cursor: pointer;
+
+      &:hover { background: rgb(30 41 59 / 80%); }
+    }
+  }
+</style>
+
+<header>
+  <h1>Canvas Button Effects Gallery</h1>
+  <p>Each button is its own <code>&lt;canvas layoutsubtree&gt;</code> with a different effect</p>
+</header>
+
+<section>
+  <h2>Tearable Cloth</h2>
+  <p class="hint">Drag to pull · right-click to tear</p>
+  <div class="row" id="cloth-row"></div>
+</section>
+
+<section>
+  <h2>Wobble</h2>
+  <p class="hint">Click to wobble from the click point</p>
+  <div class="row" id="wobble-row"></div>
+</section>
+
+<section>
+  <h2>Ripple</h2>
+  <p class="hint">Click to send ripples</p>
+  <div class="row" id="ripple-row"></div>
+</section>
+
+<section>
+  <h2>Blobby</h2>
+  <p class="hint">Click to blob — oozes out then slowly reforms</p>
+  <div class="row" id="blob-row"></div>
+</section>
+
+<section>
+  <h2>Dissolve</h2>
+  <p class="hint">Hover to dissolve into noise</p>
+  <div class="row" id="dissolve-row"></div>
+</section>
+
+<div class="controls">
+  <button onclick="resetAll()">Reset All</button>
+</div>
+
+<script>
+  const MESH_COLS = 12;
+  const MESH_ROWS = 8;
+
+  function drawTexturedTriangle(
+    ctx, img,
+    sx0, sy0, sx1, sy1, sx2, sy2,
+    dx0, dy0, dx1, dy1, dx2, dy2,
+  ) {
+    const u1 = sx1 - sx0, v1 = sy1 - sy0;
+    const u2 = sx2 - sx0, v2 = sy2 - sy0;
+    const det = u1 * v2 - v1 * u2;
+    if (Math.abs(det) < 0.01) return;
+
+    const p1 = dx1 - dx0, q1 = dy1 - dy0;
+    const p2 = dx2 - dx0, q2 = dy2 - dy0;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(dx0, dy0);
+    ctx.lineTo(dx1, dy1);
+    ctx.lineTo(dx2, dy2);
+    ctx.closePath();
+    ctx.clip();
+    ctx.setTransform(
+      (p1 * v2 - p2 * v1) / det,
+      (q1 * v2 - q2 * v1) / det,
+      (u1 * p2 - u2 * p1) / det,
+      (u1 * q2 - u2 * q1) / det,
+      dx0 - ((p1 * v2 - p2 * v1) * sx0 + (u1 * p2 - u2 * p1) * sy0) / det,
+      dy0 - ((q1 * v2 - q2 * v1) * sx0 + (u1 * q2 - u2 * q1) * sy0) / det,
+    );
+    ctx.drawImage(img, 0, 0);
+    ctx.restore();
+  }
+
+  // ─── Base class ───────────────────────────────────────────────
+  class MeshButton {
+    constructor(container, { label, cls }, { padX = 10, padY = 10 } = {}) {
+      this.padX = padX;
+      this.padY = padY;
+
+      this.canvas = document.createElement("canvas");
+      this.canvas.setAttribute("layoutsubtree", "");
+
+      this.btn = document.createElement("button");
+      this.btn.className = `btn btn-${cls}`;
+      this.btn.textContent = label;
+      this.canvas.appendChild(this.btn);
+      container.appendChild(this.canvas);
+
+      this.ctx = this.canvas.getContext("2d");
+      this.source = document.createElement("canvas");
+      this.sourceCtx = this.source.getContext("2d");
+
+      this.points = [];
+      this.btnW = 0;
+      this.btnH = 0;
+      this.offsetX = 0;
+      this.offsetY = 0;
+
+      this.canvas.onpaint = () => this.paint();
+      this.autoSize();
+
+      new ResizeObserver(([entry]) => {
+        const box = entry.devicePixelContentBoxSize[0];
+        this.setSize(box.inlineSize, box.blockSize);
+      }).observe(this.canvas, { box: "device-pixel-content-box" });
+    }
+
+    autoSize() {
+      requestAnimationFrame(() => {
+        const bw = this.btn.offsetWidth;
+        const bh = this.btn.offsetHeight;
+        this.canvas.style.width = `${bw + this.padX * 2}px`;
+        this.canvas.style.height = `${bh + this.padY * 2}px`;
+      });
+    }
+
+    setSize(w, h) {
+      this.canvas.width = w;
+      this.canvas.height = h;
+      this.source.width = w;
+      this.source.height = h;
+      this.buildMesh();
+    }
+
+    buildMesh() {
+      const bw = this.btn.offsetWidth * devicePixelRatio;
+      const bh = this.btn.offsetHeight * devicePixelRatio;
+      this.offsetX = (this.canvas.width - bw) / 2;
+      this.offsetY = (this.canvas.height - bh) / 2;
+      this.btnW = bw;
+      this.btnH = bh;
+
+      this.points = [];
+      for (let j = 0; j <= MESH_ROWS; j++) {
+        for (let i = 0; i <= MESH_COLS; i++) {
+          const rx = this.offsetX + (i / MESH_COLS) * bw;
+          const ry = this.offsetY + (j / MESH_ROWS) * bh;
+          this.points.push({
+            x: rx, y: ry, restX: rx, restY: ry,
+            px: rx, py: ry, vx: 0, vy: 0,
+            pinX: null, pinY: null, constraints: [],
+          });
+        }
+      }
+      this.onMeshBuilt();
+    }
+
+    onMeshBuilt() {}
+
+    paint() {
+      if (this.points.length === 0) return;
+      const ctx = this.ctx;
+      ctx.reset();
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+      try {
+        const transform = ctx.drawElementImage(this.btn, this.offsetX, this.offsetY);
+        this.btn.style.transform = transform.toString();
+      } catch { return; }
+
+      this.sourceCtx.reset();
+      this.sourceCtx.clearRect(0, 0, this.source.width, this.source.height);
+      this.sourceCtx.drawImage(this.canvas, 0, 0);
+
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.renderMesh();
+    }
+
+    renderMesh() {
+      const ctx = this.ctx;
+      const w = MESH_COLS + 1;
+      for (let j = 0; j < MESH_ROWS; j++) {
+        for (let i = 0; i < MESH_COLS; i++) {
+          const p00 = this.points[j * w + i];
+          const p10 = this.points[j * w + i + 1];
+          const p01 = this.points[(j + 1) * w + i];
+          const p11 = this.points[(j + 1) * w + i + 1];
+
+          const sx0 = this.offsetX + (i / MESH_COLS) * this.btnW;
+          const sy0 = this.offsetY + (j / MESH_ROWS) * this.btnH;
+          const sx1 = this.offsetX + ((i + 1) / MESH_COLS) * this.btnW;
+          const sy1 = this.offsetY + ((j + 1) / MESH_ROWS) * this.btnH;
+
+          drawTexturedTriangle(ctx, this.source,
+            sx0, sy0, sx1, sy0, sx0, sy1,
+            p00.x, p00.y, p10.x, p10.y, p01.x, p01.y,
+          );
+          drawTexturedTriangle(ctx, this.source,
+            sx1, sy0, sx1, sy1, sx0, sy1,
+            p10.x, p10.y, p11.x, p11.y, p01.x, p01.y,
+          );
+        }
+      }
+    }
+
+    toCanvasPoint(clientX, clientY) {
+      const rect = this.canvas.getBoundingClientRect();
+      return {
+        x: (clientX - rect.left) * devicePixelRatio,
+        y: (clientY - rect.top) * devicePixelRatio,
+      };
+    }
+
+    update(delta) {}
+
+    reset() {
+      this.buildMesh();
+    }
+  }
+
+  // ─── Tearable Cloth ───────────────────────────────────────────
+  class ClothButton extends MeshButton {
+    constructor(container, def) {
+      super(container, def, { padX: 10, padY: 50 });
+      this.mouse = { down: false, button: 1, x: 0, y: 0, px: 0, py: 0 };
+      this.gravity = 0;
+
+      this.canvas.addEventListener("pointerdown", (e) => {
+        this.mouse.button = e.button === 0 ? 1 : 3;
+        this.mouse.down = true;
+        const p = this.toCanvasPoint(e.clientX, e.clientY);
+        this.mouse.px = this.mouse.x = p.x;
+        this.mouse.py = this.mouse.y = p.y;
+        this.canvas.setPointerCapture(e.pointerId);
+      });
+      this.canvas.addEventListener("pointermove", (e) => {
+        const p = this.toCanvasPoint(e.clientX, e.clientY);
+        this.mouse.px = this.mouse.x;
+        this.mouse.py = this.mouse.y;
+        this.mouse.x = p.x;
+        this.mouse.y = p.y;
+      });
+      this.canvas.addEventListener("pointerup", () => { this.mouse.down = false; });
+      this.canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+    }
+
+    onMeshBuilt() {
+      const w = MESH_COLS + 1;
+      const hSp = this.btnW / MESH_COLS;
+      const vSp = this.btnH / MESH_ROWS;
+      const avg = (hSp + vSp) / 2;
+      this.gravity = 400 * (avg / 8);
+      this.hSpacing = hSp;
+      this.vSpacing = vSp;
+      this.mouseInfluence = avg * 4.5;
+      this.mouseCut = avg * 1.2;
+
+      this.offsetY = this.btnH * 0.15;
+      for (let j = 0; j <= MESH_ROWS; j++) {
+        for (let i = 0; i <= MESH_COLS; i++) {
+          const p = this.points[j * w + i];
+          const x = this.offsetX + (i / MESH_COLS) * this.btnW;
+          const y = this.offsetY + (j / MESH_ROWS) * this.btnH;
+          p.x = p.px = p.restX = x;
+          p.y = p.py = p.restY = y;
+          p.constraints = [];
+          if (j === 0) { p.pinX = x; p.pinY = y; }
+          if (i > 0) {
+            const other = this.points[j * w + i - 1];
+            p.constraints.push({ p1: p, p2: other, length: Math.hypot(x - other.x, y - other.y) });
+          }
+          if (j > 0) {
+            const other = this.points[(j - 1) * w + i];
+            p.constraints.push({ p1: p, p2: other, length: Math.hypot(x - other.x, y - other.y) });
+          }
+        }
+      }
+    }
+
+    update(delta) {
+      if (this.points.length === 0) return;
+      const dsq = delta * delta;
+
+      for (let iter = 0; iter < 5; iter++) {
+        for (const p of this.points) {
+          if (p.pinX != null) { p.x = p.pinX; p.y = p.pinY; continue; }
+          for (let ci = p.constraints.length - 1; ci >= 0; ci--) {
+            const c = p.constraints[ci];
+            const dx = c.p1.x - c.p2.x, dy = c.p1.y - c.p2.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < c.length) continue;
+            if (dist > c.length * 6) { p.constraints.splice(ci, 1); continue; }
+            const mul = ((c.length - dist) / dist) * 0.5 * (1 - c.length / dist);
+            const px = dx * mul, py = dy * mul;
+            if (c.p1.pinX == null) { c.p1.x += px; c.p1.y += py; }
+            if (c.p2.pinX == null) { c.p2.x -= px; c.p2.y -= py; }
+          }
+        }
+      }
+
+      for (const p of this.points) {
+        if (p.pinX != null) continue;
+        if (this.mouse.down) {
+          const dx = p.x - this.mouse.x, dy = p.y - this.mouse.y;
+          const dist = Math.hypot(dx, dy);
+          if (this.mouse.button === 1 && dist < this.mouseInfluence) {
+            p.px = p.x - (this.mouse.x - this.mouse.px);
+            p.py = p.y - (this.mouse.y - this.mouse.py);
+          } else if (dist < this.mouseCut) {
+            p.constraints = [];
+          }
+        }
+        p.vy += this.gravity;
+        const nx = p.x + (p.x - p.px) * 0.99 + p.vx * dsq;
+        const ny = p.y + (p.y - p.py) * 0.99 + p.vy * dsq;
+        p.px = p.x; p.py = p.y; p.x = nx; p.y = ny; p.vx = p.vy = 0;
+        const cw = this.canvas.width, ch = this.canvas.height;
+        if (p.x >= cw) { p.px = cw + (cw - p.px) * 0.5; p.x = cw; }
+        else if (p.x <= 0) { p.px *= -0.5; p.x = 0; }
+        if (p.y >= ch) { p.py = ch + (ch - p.py) * 0.5; p.y = ch; }
+        else if (p.y <= 0) { p.py *= -0.5; p.y = 0; }
+      }
+    }
+
+    renderMesh() {
+      const ctx = this.ctx;
+      const w = MESH_COLS + 1;
+      const maxH = this.hSpacing * 3;
+      const maxV = this.vSpacing * 3;
+
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.1)";
+      ctx.lineWidth = devicePixelRatio;
+      ctx.beginPath();
+      for (const p of this.points) {
+        for (const c of p.constraints) {
+          ctx.moveTo(c.p1.x, c.p1.y);
+          ctx.lineTo(c.p2.x, c.p2.y);
+        }
+      }
+      ctx.stroke();
+
+      for (let j = 0; j < MESH_ROWS; j++) {
+        for (let i = 0; i < MESH_COLS; i++) {
+          const p00 = this.points[j * w + i];
+          const p10 = this.points[j * w + i + 1];
+          const p01 = this.points[(j + 1) * w + i];
+          const p11 = this.points[(j + 1) * w + i + 1];
+          if (Math.hypot(p10.x - p00.x, p10.y - p00.y) > maxH) continue;
+          if (Math.hypot(p01.x - p00.x, p01.y - p00.y) > maxV) continue;
+          if (Math.hypot(p11.x - p10.x, p11.y - p10.y) > maxV) continue;
+          if (Math.hypot(p11.x - p01.x, p11.y - p01.y) > maxH) continue;
+
+          const sx0 = this.offsetX + (i / MESH_COLS) * this.btnW;
+          const sy0 = this.offsetY + (j / MESH_ROWS) * this.btnH;
+          const sx1 = this.offsetX + ((i + 1) / MESH_COLS) * this.btnW;
+          const sy1 = this.offsetY + ((j + 1) / MESH_ROWS) * this.btnH;
+          drawTexturedTriangle(ctx, this.source, sx0, sy0, sx1, sy0, sx0, sy1, p00.x, p00.y, p10.x, p10.y, p01.x, p01.y);
+          drawTexturedTriangle(ctx, this.source, sx1, sy0, sx1, sy1, sx0, sy1, p10.x, p10.y, p11.x, p11.y, p01.x, p01.y);
+        }
+      }
+    }
+  }
+
+  // ─── Wobble ───────────────────────────────────────────────────
+  class WobbleButton extends MeshButton {
+    constructor(container, def) {
+      super(container, def, { padX: 16, padY: 16 });
+      this.stiffness = 280;
+      this.damping = 0.88;
+
+      this.canvas.addEventListener("pointerdown", (e) => {
+        const p = this.toCanvasPoint(e.clientX, e.clientY);
+        this.applyImpulse(p.x, p.y);
+      });
+    }
+
+    applyImpulse(cx, cy) {
+      const radius = Math.max(this.btnW, this.btnH) * 0.5;
+      const strength = radius * 12;
+      for (const p of this.points) {
+        const dx = p.restX - cx, dy = p.restY - cy;
+        const dist = Math.hypot(dx, dy) || 1;
+        const force = strength * Math.exp(-dist / radius);
+        p.vx += (dx / dist) * force;
+        p.vy += (dy / dist) * force;
+      }
+    }
+
+    update(delta) {
+      for (const p of this.points) {
+        const fx = -this.stiffness * (p.x - p.restX);
+        const fy = -this.stiffness * (p.y - p.restY);
+        p.vx = (p.vx + fx * delta) * this.damping;
+        p.vy = (p.vy + fy * delta) * this.damping;
+        p.x += p.vx * delta;
+        p.y += p.vy * delta;
+      }
+    }
+  }
+
+  // ─── Ripple ───────────────────────────────────────────────────
+  class RippleButton extends MeshButton {
+    constructor(container, def) {
+      super(container, def, { padX: 12, padY: 12 });
+      this.ripples = [];
+
+      this.canvas.addEventListener("pointerdown", (e) => {
+        const p = this.toCanvasPoint(e.clientX, e.clientY);
+        this.ripples.push({ cx: p.x, cy: p.y, time: 0 });
+      });
+    }
+
+    update(delta) {
+      for (let i = this.ripples.length - 1; i >= 0; i--) {
+        this.ripples[i].time += delta;
+        if (this.ripples[i].time > 2) this.ripples.splice(i, 1);
+      }
+
+      const amp = 6 * devicePixelRatio;
+      const speed = 300 * devicePixelRatio;
+      const freq = 0.04 / devicePixelRatio;
+
+      for (const p of this.points) {
+        p.x = p.restX;
+        p.y = p.restY;
+        for (const r of this.ripples) {
+          const dx = p.restX - r.cx, dy = p.restY - r.cy;
+          const dist = Math.hypot(dx, dy) || 1;
+          const wave = dist - speed * r.time;
+          const envelope = amp * Math.exp(-r.time * 2.5) * Math.exp(-Math.abs(wave) * 0.008);
+          const disp = envelope * Math.sin(wave * freq * Math.PI * 2);
+          p.x += (dx / dist) * disp;
+          p.y += (dy / dist) * disp;
+        }
+      }
+    }
+  }
+
+  // ─── Blobby (liquid shatter) ─────────────────────────────────
+  class BlobButton extends MeshButton {
+    constructor(container, def) {
+      super(container, def, { padX: 30, padY: 30 });
+      this.blobs = null;
+
+      this.canvas.addEventListener("pointerdown", () => this.shatter());
+    }
+
+    shatter() {
+      const cx = this.offsetX + this.btnW / 2;
+      const cy = this.offsetY + this.btnH / 2;
+      const r = Math.min(this.btnW, this.btnH) * 0.45;
+      this.blobs = [];
+
+      const cols = 3, rows = 2;
+      for (let j = 0; j < rows; j++) {
+        for (let i = 0; i < cols; i++) {
+          const sx = this.offsetX + ((i + 0.5) / cols) * this.btnW + (Math.random() - 0.5) * this.btnW * 0.12;
+          const sy = this.offsetY + ((j + 0.5) / rows) * this.btnH + (Math.random() - 0.5) * this.btnH * 0.12;
+          const dx = sx - cx, dy = sy - cy;
+          const dist = Math.hypot(dx, dy) || 1;
+          const speed = (150 + Math.random() * 200) * devicePixelRatio;
+          this.blobs.push({
+            sx, sy, x: sx, y: sy,
+            vx: (dx / dist) * speed + (Math.random() - 0.5) * 100 * devicePixelRatio,
+            vy: (dy / dist) * speed + (Math.random() - 0.5) * 100 * devicePixelRatio,
+            radius: r + Math.random() * r * 0.3,
+            wobblePhase: Math.random() * Math.PI * 2,
+            wobbleSpeed: 3 + Math.random() * 4,
+          });
+        }
+      }
+      for (let k = 0; k < 2; k++) {
+        const sx = this.offsetX + (0.2 + Math.random() * 0.6) * this.btnW;
+        const sy = this.offsetY + (0.2 + Math.random() * 0.6) * this.btnH;
+        const dx = sx - cx, dy = sy - cy;
+        const dist = Math.hypot(dx, dy) || 1;
+        const speed = (120 + Math.random() * 180) * devicePixelRatio;
+        this.blobs.push({
+          sx, sy, x: sx, y: sy,
+          vx: (dx / dist) * speed + (Math.random() - 0.5) * 120 * devicePixelRatio,
+          vy: (dy / dist) * speed + (Math.random() - 0.5) * 120 * devicePixelRatio,
+          radius: r * 0.7 + Math.random() * r * 0.3,
+          wobblePhase: Math.random() * Math.PI * 2,
+          wobbleSpeed: 3 + Math.random() * 4,
+        });
+      }
+    }
+
+    update(delta) {
+      if (!this.blobs) return;
+      let settled = true;
+      for (const b of this.blobs) {
+        const fx = -90 * (b.x - b.sx);
+        const fy = -90 * (b.y - b.sy);
+        b.vx = (b.vx + fx * delta) * 0.94;
+        b.vy = (b.vy + fy * delta) * 0.94;
+        b.x += b.vx * delta;
+        b.y += b.vy * delta;
+        const disp = Math.hypot(b.x - b.sx, b.y - b.sy);
+        b.wobblePhase += b.wobbleSpeed * delta * Math.min(1, disp / b.radius * 3 + 0.05);
+        if (disp > 0.3 || Math.hypot(b.vx, b.vy) > 0.5) settled = false;
+      }
+      if (settled) this.blobs = null;
+    }
+
+    paint() {
+      if (this.points.length === 0) return;
+      const ctx = this.ctx;
+      ctx.reset();
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      try {
+        const transform = ctx.drawElementImage(this.btn, this.offsetX, this.offsetY);
+        this.btn.style.transform = transform.toString();
+      } catch { return; }
+      this.sourceCtx.reset();
+      this.sourceCtx.clearRect(0, 0, this.source.width, this.source.height);
+      this.sourceCtx.drawImage(this.canvas, 0, 0);
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+      if (!this.blobs) {
+        ctx.drawImage(this.source, 0, 0);
+        return;
+      }
+
+      for (const b of this.blobs) {
+        const disp = Math.hypot(b.x - b.sx, b.y - b.sy);
+        const wobbleAmp = Math.min(1, disp / b.radius * 2);
+        ctx.save();
+        ctx.beginPath();
+        const steps = 28;
+        for (let s = 0; s < steps; s++) {
+          const a = (s / steps) * Math.PI * 2;
+          const w = 1
+            + wobbleAmp * 0.14 * Math.sin(3 * a + b.wobblePhase)
+            + wobbleAmp * 0.08 * Math.sin(5 * a - b.wobblePhase * 0.7)
+            + wobbleAmp * 0.04 * Math.sin(7 * a + b.wobblePhase * 1.3);
+          const rr = b.radius * w;
+          const px = b.x + Math.cos(a) * rr;
+          const py = b.y + Math.sin(a) * rr;
+          if (s === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(this.source, b.x - b.sx, b.y - b.sy);
+        ctx.restore();
+      }
+    }
+  }
+
+  // ─── Dissolve (scatter on hover) ────────────────────────────
+  class DissolveButton extends MeshButton {
+    constructor(container, def) {
+      super(container, def, { padX: 40, padY: 40 });
+      this.progress = 0;
+      this.target = 0;
+      this.tiles = [];
+
+      this.canvas.addEventListener("pointerenter", () => { this.target = 1; });
+      this.canvas.addEventListener("pointerleave", () => { this.target = 0; });
+    }
+
+    onMeshBuilt() {
+      const ts = Math.max(2, Math.round(2 * devicePixelRatio));
+      this.tiles = [];
+      const cols = Math.ceil(this.btnW / ts);
+      const rows = Math.ceil(this.btnH / ts);
+      const cx = this.offsetX + this.btnW / 2;
+      const cy = this.offsetY + this.btnH / 2;
+
+      let seed = 7919;
+      const rng = () => {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return (seed >>> 16) / 65536;
+      };
+
+      for (let j = 0; j < rows; j++) {
+        for (let i = 0; i < cols; i++) {
+          const tx = this.offsetX + i * ts;
+          const ty = this.offsetY + j * ts;
+          const tw = Math.min(ts, this.offsetX + this.btnW - tx);
+          const th = Math.min(ts, this.offsetY + this.btnH - ty);
+          const dx = tx + tw / 2 - cx, dy = ty + th / 2 - cy;
+          const dist = Math.hypot(dx, dy) || 1;
+
+          this.tiles.push({
+            tx, ty, tw, th,
+            noise: rng(),
+            dirX: dx / dist,
+            dirY: dy / dist,
+            jx: (rng() - 0.5) * 2,
+            jy: (rng() - 0.5) * 2,
+          });
+        }
+      }
+    }
+
+    update(delta) {
+      const speed = this.target === 1 ? 2.5 : 1.8;
+      this.progress += (this.target - this.progress) * speed * delta;
+      this.progress = Math.max(0, Math.min(1, this.progress));
+    }
+
+    paint() {
+      if (this.points.length === 0) return;
+      const ctx = this.ctx;
+      const w = this.canvas.width, h = this.canvas.height;
+      ctx.reset();
+      ctx.clearRect(0, 0, w, h);
+
+      try {
+        const transform = ctx.drawElementImage(this.btn, this.offsetX, this.offsetY);
+        this.btn.style.transform = transform.toString();
+      } catch { return; }
+
+      this.sourceCtx.reset();
+      this.sourceCtx.clearRect(0, 0, w, h);
+      this.sourceCtx.drawImage(this.canvas, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+
+      if (this.progress < 0.001) {
+        ctx.drawImage(this.source, 0, 0);
+        return;
+      }
+
+      const threshold = this.progress * 1.15;
+      const edgeWidth = 0.25;
+      const maxScatter = 60 * devicePixelRatio;
+
+      for (const t of this.tiles) {
+        const n = t.noise;
+        if (n > threshold + edgeWidth) {
+          ctx.drawImage(this.source, t.tx, t.ty, t.tw, t.th, t.tx, t.ty, t.tw, t.th);
+        } else if (n > threshold - edgeWidth * 0.4) {
+          const blend = (n - threshold) / edgeWidth;
+          const scatter = maxScatter * Math.pow(1 - Math.max(0, blend), 2.5);
+          const ox = t.dirX * scatter + t.jx * scatter * 0.7;
+          const oy = t.dirY * scatter + t.jy * scatter * 0.7;
+          ctx.globalAlpha = Math.max(0, Math.min(1, blend * 1.2 + 0.6));
+          ctx.drawImage(this.source, t.tx, t.ty, t.tw, t.th, t.tx + ox, t.ty + oy, t.tw, t.th);
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // ─── Gallery setup ────────────────────────────────────────────
+  const allInstances = [];
+
+  function createGroup(rowId, Effect, defs) {
+    const row = document.getElementById(rowId);
+    for (const def of defs) {
+      const inst = new Effect(row, def);
+      allInstances.push(inst);
+    }
+  }
+
+  createGroup("cloth-row", ClothButton, [
+    { label: "Save",   cls: "blue" },
+    { label: "Delete", cls: "red"  },
+    { label: "Share",  cls: "cyan" },
+  ]);
+
+  createGroup("wobble-row", WobbleButton, [
+    { label: "Submit", cls: "green"  },
+    { label: "Cancel", cls: "amber"  },
+    { label: "Search", cls: "purple" },
+  ]);
+
+  createGroup("ripple-row", RippleButton, [
+    { label: "Upload",   cls: "pink"    },
+    { label: "Export",    cls: "outline" },
+    { label: "Star",      cls: "emerald" },
+  ]);
+
+  createGroup("blob-row", BlobButton, [
+    { label: "Settings", cls: "dark" },
+    { label: "Archive",  cls: "gray" },
+    { label: "Follow",   cls: "rose" },
+  ]);
+
+  createGroup("dissolve-row", DissolveButton, [
+    { label: "Erase",   cls: "red"     },
+    { label: "Vanish",  cls: "purple"  },
+    { label: "Fade",    cls: "cyan"    },
+  ]);
+
+  function resetAll() {
+    for (const inst of allInstances) inst.reset();
+  }
+
+  function tick() {
+    for (const inst of allInstances) {
+      inst.update(0.016);
+      inst.canvas.requestPaint();
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+</script>

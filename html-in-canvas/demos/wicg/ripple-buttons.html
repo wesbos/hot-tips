@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@600;700&family=Fraunces:ital,wght@0,700;1,700&family=IBM+Plex+Sans:wght@500;600;700&family=Manrope:wght@600;700;800&family=Nunito:wght@700;800&family=Outfit:wght@600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=Sora:wght@600;700&family=Space+Grotesk:wght@600;700&family=Syne:wght@600;700;800&display=swap"
+  rel="stylesheet"
+/>
+
+<style>
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    place-content: center;
+    gap: 16px;
+    padding: 24px;
+    background: radial-gradient(ellipse 90% 70% at 50% -10%, #ffffff 0%, transparent 55%),
+      linear-gradient(165deg, #fffdf8 0%, #f7f0e4 42%, #ffffff 100%);
+    font-family: "DM Sans", system-ui, sans-serif;
+  }
+
+  .gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    justify-content: center;
+    max-width: 56rem;
+  }
+
+  canvas {
+    display: block;
+    border: none;
+    background: transparent;
+    overflow: clip;
+    cursor: pointer;
+  }
+
+  .btn {
+    pointer-events: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-family: "DM Sans", system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+
+  /* —— Original gallery styles —— */
+  .btn-blue {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    font-family: "DM Sans", system-ui, sans-serif;
+  }
+
+  .btn-outline {
+    background: rgba(255, 255, 255, 0.92);
+    border: 2px solid #3b82f6;
+    color: #2563eb;
+    font-family: "DM Sans", system-ui, sans-serif;
+  }
+
+  .btn-emerald {
+    background: linear-gradient(135deg, #10b981, #059669);
+    font-family: "DM Sans", system-ui, sans-serif;
+  }
+
+  /* —— Neo-brutalist stack (inspo: bold offset shadow + gradient pill) —— */
+  .btn-brutal-magenta {
+    background: linear-gradient(90deg, #c026d3, #f472b6);
+    color: #fff;
+    font-family: "Archivo Black", system-ui, sans-serif;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-size: 13px;
+    border-radius: 999px;
+    border: 3px solid #000;
+    padding: 12px 28px;
+  }
+
+  .btn-brutal-violet {
+    background: linear-gradient(90deg, #5b21b6, #a78bfa);
+    color: #fff;
+    font-family: "Archivo Black", system-ui, sans-serif;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-size: 13px;
+    border-radius: 999px;
+    border: 3px solid #000;
+    padding: 12px 28px;
+  }
+
+  .btn-brutal-teal {
+    background: linear-gradient(90deg, #0f766e, #2dd4bf);
+    color: #fff;
+    font-family: "Archivo Black", system-ui, sans-serif;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-size: 13px;
+    border-radius: 999px;
+    border: 3px solid #000;
+    padding: 12px 28px;
+  }
+
+  /* —— Glossy “plastic” (inspo: vertical gradient + inset highlight + glow) —— */
+  .btn-gloss-orange {
+    background: linear-gradient(180deg, #fb923c 0%, #ea580c 55%, #9a3412 100%);
+    color: #fff;
+    font-family: "Outfit", system-ui, sans-serif;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    border-radius: 999px;
+    border: 1px solid rgba(0, 0, 0, 0.35);
+    padding: 12px 26px;
+  }
+
+  .btn-gloss-cyan {
+    background: linear-gradient(180deg, #22d3ee 0%, #0891b2 55%, #155e75 100%);
+    color: #fff;
+    font-family: "Outfit", system-ui, sans-serif;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    border-radius: 999px;
+    border: 1px solid rgba(0, 0, 0, 0.35);
+    padding: 12px 26px;
+  }
+
+  /* —— LINK-style variants —— */
+  .btn-link-solid {
+    background: #059669;
+    color: #fff;
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    border-radius: 0;
+    font-weight: 700;
+    padding: 12px 24px;
+  }
+
+  .btn-link-ghost {
+    background: transparent;
+    color: #34d399;
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    border: 2px solid #10b981;
+    border-radius: 0;
+    font-weight: 600;
+    padding: 10px 22px;
+  }
+
+  .btn-sunset {
+    background: linear-gradient(90deg, #facc15, #f97316, #ef4444);
+    color: #fff;
+    font-family: "Sora", system-ui, sans-serif;
+    border-radius: 4px;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    padding: 12px 26px;
+  }
+
+  /* —— Mint design mat + accent (inspo: drafting / swash pill) —— */
+  .btn-mint-pill {
+    background: linear-gradient(180deg, #d1fae5, #a7f3d0);
+    color: #14532d;
+    font-family: "Fraunces", Georgia, serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 15px;
+    border-radius: 999px;
+    padding: 12px 32px;
+    border: 2px dashed rgba(255, 255, 255, 0.85);
+  }
+
+  /* —— Magenta pill + dot (inspo: LINK 07) —— */
+  .btn-pill-dot {
+    --dot: #db2777;
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(90deg, #ec4899, #f472b6);
+    color: #fff;
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    border-radius: 999px;
+    padding: 10px 22px 10px 18px;
+    gap: 10px;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+  }
+
+  .btn-pill-dot::before {
+    content: "";
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid var(--dot);
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+
+  /* —— Split buttons: label + price / badge (rounded shell + inner chip) —— */
+  .btn-split-buy,
+  .btn-split-sub,
+  .btn-split-cart,
+  .btn-split-pro,
+  .btn-split-free {
+    display: inline-flex;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 5px 6px 5px 18px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: left;
+  }
+
+  .btn-split-buy,
+  .btn-split-free {
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  }
+
+  .btn-split-sub {
+    font-family: "Syne", system-ui, sans-serif;
+  }
+
+  .btn-split-cart {
+    font-family: "Nunito", system-ui, sans-serif;
+  }
+
+  .btn-split-pro {
+    font-family: "Manrope", system-ui, sans-serif;
+  }
+
+  .btn-split-buy .btn-split__label,
+  .btn-split-sub .btn-split__label,
+  .btn-split-cart .btn-split__label,
+  .btn-split-pro .btn-split__label,
+  .btn-split-free .btn-split__label {
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+  }
+
+  .btn-split-buy .btn-split__price,
+  .btn-split-sub .btn-split__price,
+  .btn-split-cart .btn-split__price,
+  .btn-split-pro .btn-split__price,
+  .btn-split-free .btn-split__price {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    padding: 9px 14px;
+    border-radius: 10px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+
+  .btn-split-buy {
+    background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+    color: #fff;
+  }
+
+  .btn-split-buy .btn-split__price {
+    background: linear-gradient(180deg, #fde68a 0%, #f59e0b 55%, #d97706 100%);
+    color: #1c1917;
+  }
+
+  .btn-split-sub {
+    background: linear-gradient(180deg, #7c3aed 0%, #5b21b6 100%);
+    color: #faf5ff;
+  }
+
+  .btn-split-sub .btn-split__price {
+    background: linear-gradient(180deg, #a7f3d0 0%, #34d399 100%);
+    color: #064e3b;
+  }
+
+  .btn-split-cart {
+    background: linear-gradient(180deg, #059669 0%, #047857 100%);
+    color: #ecfdf5;
+  }
+
+  .btn-split-cart .btn-split__price {
+    background: #f0fdf4;
+    color: #065f46;
+    font-size: 15px;
+    border: 1px solid rgba(6, 95, 70, 0.15);
+  }
+
+  .btn-split-pro {
+    background: linear-gradient(180deg, #334155 0%, #0f172a 100%);
+    color: #f1f5f9;
+    border: 1px solid rgb(148 163 184 / 35%);
+  }
+
+  .btn-split-pro .btn-split__price {
+    background: linear-gradient(180deg, #c4b5fd 0%, #7c3aed 100%);
+    color: #fff;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+
+  .btn-split-free {
+    background: linear-gradient(180deg, #0d9488 0%, #0f766e 100%);
+    color: #f0fdfa;
+  }
+
+  .btn-split-free .btn-split__price {
+    background: linear-gradient(180deg, #fef9c3 0%, #fde047 100%);
+    color: #713f12;
+    font-size: 13px;
+    font-weight: 800;
+  }
+</style>
+
+<div class="gallery" id="ripple-gallery"></div>
+
+<script>
+  const MESH_COLS = 12;
+  const MESH_ROWS = 8;
+
+  function drawTexturedTriangle(ctx, img, sx0, sy0, sx1, sy1, sx2, sy2, dx0, dy0, dx1, dy1, dx2, dy2) {
+    const u1 = sx1 - sx0,
+      v1 = sy1 - sy0;
+    const u2 = sx2 - sx0,
+      v2 = sy2 - sy0;
+    const det = u1 * v2 - v1 * u2;
+    if (Math.abs(det) < 0.01) return;
+
+    const p1 = dx1 - dx0,
+      q1 = dy1 - dy0;
+    const p2 = dx2 - dx0,
+      q2 = dy2 - dy0;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(dx0, dy0);
+    ctx.lineTo(dx1, dy1);
+    ctx.lineTo(dx2, dy2);
+    ctx.closePath();
+    ctx.clip();
+    ctx.setTransform(
+      (p1 * v2 - p2 * v1) / det,
+      (q1 * v2 - q2 * v1) / det,
+      (u1 * p2 - u2 * p1) / det,
+      (u1 * q2 - u2 * q1) / det,
+      dx0 - ((p1 * v2 - p2 * v1) * sx0 + (u1 * p2 - u2 * p1) * sy0) / det,
+      dy0 - ((q1 * v2 - q2 * v1) * sx0 + (u1 * q2 - u2 * q1) * sy0) / det
+    );
+    ctx.drawImage(img, 0, 0);
+    ctx.restore();
+  }
+
+  class MeshButton {
+    constructor(container, def, { padX = 10, padY = 10 } = {}) {
+      const { label, cls, html } = def;
+      this.padX = padX;
+      this.padY = padY;
+
+      this.canvas = document.createElement("canvas");
+      this.canvas.setAttribute("layoutsubtree", "");
+
+      this.btn = document.createElement("button");
+      this.btn.type = "button";
+      this.btn.className = `btn btn-${cls}`;
+      if (html != null) {
+        this.btn.innerHTML = html;
+      } else {
+        this.btn.textContent = label ?? "";
+      }
+      this.canvas.appendChild(this.btn);
+      container.appendChild(this.canvas);
+
+      this.ctx = this.canvas.getContext("2d");
+      this.source = document.createElement("canvas");
+      this.sourceCtx = this.source.getContext("2d");
+
+      this.points = [];
+      this.btnW = 0;
+      this.btnH = 0;
+      this.offsetX = 0;
+      this.offsetY = 0;
+
+      this.canvas.onpaint = () => this.paint();
+      this.autoSize();
+
+      new ResizeObserver(([entry]) => {
+        const box = entry.devicePixelContentBoxSize[0];
+        this.setSize(box.inlineSize, box.blockSize);
+      }).observe(this.canvas, { box: "device-pixel-content-box" });
+    }
+
+    autoSize() {
+      requestAnimationFrame(() => {
+        const bw = this.btn.offsetWidth;
+        const bh = this.btn.offsetHeight;
+        this.canvas.style.width = `${bw + this.padX * 2}px`;
+        this.canvas.style.height = `${bh + this.padY * 2}px`;
+      });
+    }
+
+    setSize(w, h) {
+      this.canvas.width = w;
+      this.canvas.height = h;
+      this.source.width = w;
+      this.source.height = h;
+      this.buildMesh();
+    }
+
+    buildMesh() {
+      const bw = this.btn.offsetWidth * devicePixelRatio;
+      const bh = this.btn.offsetHeight * devicePixelRatio;
+      this.offsetX = (this.canvas.width - bw) / 2;
+      this.offsetY = (this.canvas.height - bh) / 2;
+      this.btnW = bw;
+      this.btnH = bh;
+
+      this.points = [];
+      for (let j = 0; j <= MESH_ROWS; j++) {
+        for (let i = 0; i <= MESH_COLS; i++) {
+          const rx = this.offsetX + (i / MESH_COLS) * bw;
+          const ry = this.offsetY + (j / MESH_ROWS) * bh;
+          this.points.push({
+            x: rx,
+            y: ry,
+            restX: rx,
+            restY: ry,
+            px: rx,
+            py: ry,
+            vx: 0,
+            vy: 0,
+            pinX: null,
+            pinY: null,
+            constraints: [],
+          });
+        }
+      }
+      this.onMeshBuilt();
+    }
+
+    onMeshBuilt() {}
+
+    paint() {
+      if (this.points.length === 0) return;
+      const ctx = this.ctx;
+      ctx.reset();
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+      try {
+        const transform = ctx.drawElementImage(this.btn, this.offsetX, this.offsetY);
+        this.btn.style.transform = transform.toString();
+      } catch {
+        return;
+      }
+
+      this.sourceCtx.reset();
+      this.sourceCtx.clearRect(0, 0, this.source.width, this.source.height);
+      this.sourceCtx.drawImage(this.canvas, 0, 0);
+
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.renderMesh();
+    }
+
+    renderMesh() {
+      const ctx = this.ctx;
+      const w = MESH_COLS + 1;
+      for (let j = 0; j < MESH_ROWS; j++) {
+        for (let i = 0; i < MESH_COLS; i++) {
+          const p00 = this.points[j * w + i];
+          const p10 = this.points[j * w + i + 1];
+          const p01 = this.points[(j + 1) * w + i];
+          const p11 = this.points[(j + 1) * w + i + 1];
+
+          const sx0 = this.offsetX + (i / MESH_COLS) * this.btnW;
+          const sy0 = this.offsetY + (j / MESH_ROWS) * this.btnH;
+          const sx1 = this.offsetX + ((i + 1) / MESH_COLS) * this.btnW;
+          const sy1 = this.offsetY + ((j + 1) / MESH_ROWS) * this.btnH;
+
+          drawTexturedTriangle(
+            ctx,
+            this.source,
+            sx0,
+            sy0,
+            sx1,
+            sy0,
+            sx0,
+            sy1,
+            p00.x,
+            p00.y,
+            p10.x,
+            p10.y,
+            p01.x,
+            p01.y
+          );
+          drawTexturedTriangle(
+            ctx,
+            this.source,
+            sx1,
+            sy0,
+            sx1,
+            sy1,
+            sx0,
+            sy1,
+            p10.x,
+            p10.y,
+            p11.x,
+            p11.y,
+            p01.x,
+            p01.y
+          );
+        }
+      }
+    }
+
+    toCanvasPoint(clientX, clientY) {
+      const rect = this.canvas.getBoundingClientRect();
+      return {
+        x: (clientX - rect.left) * devicePixelRatio,
+        y: (clientY - rect.top) * devicePixelRatio,
+      };
+    }
+
+    update(delta) {}
+
+    reset() {
+      this.buildMesh();
+    }
+  }
+
+  class RippleButton extends MeshButton {
+    constructor(container, def) {
+      super(container, def, { padX: 12, padY: 12 });
+      this.ripples = [];
+
+      this.canvas.addEventListener("pointerdown", (e) => {
+        const p = this.toCanvasPoint(e.clientX, e.clientY);
+        this.ripples.push({ cx: p.x, cy: p.y, time: 0 });
+      });
+    }
+
+    update(delta) {
+      for (let i = this.ripples.length - 1; i >= 0; i--) {
+        this.ripples[i].time += delta;
+        if (this.ripples[i].time > 2) this.ripples.splice(i, 1);
+      }
+
+      const amp = 6 * devicePixelRatio;
+      const speed = 300 * devicePixelRatio;
+      const freq = 0.04 / devicePixelRatio;
+
+      for (const p of this.points) {
+        p.x = p.restX;
+        p.y = p.restY;
+        for (const r of this.ripples) {
+          const dx = p.restX - r.cx,
+            dy = p.restY - r.cy;
+          const dist = Math.hypot(dx, dy) || 1;
+          const wave = dist - speed * r.time;
+          const envelope = amp * Math.exp(-r.time * 2.5) * Math.exp(-Math.abs(wave) * 0.008);
+          const disp = envelope * Math.sin(wave * freq * Math.PI * 2);
+          p.x += (dx / dist) * disp;
+          p.y += (dy / dist) * disp;
+        }
+      }
+    }
+  }
+
+  const allInstances = [];
+
+  const defs = [
+    { label: "Upload", cls: "blue" },
+    { label: "Export", cls: "outline" },
+    // { label: "Star", cls: "emerald" },
+    // { label: "Sign up", cls: "brutal-magenta" },
+    // { label: "Login", cls: "brutal-violet" },
+    // { label: "Play", cls: "brutal-teal" },
+    // { label: "Shop now", cls: "gloss-orange" },
+    // { label: "Download", cls: "gloss-cyan" },
+    // { label: "Link 01", cls: "link-solid" },
+    // { label: "Link 02", cls: "link-ghost" },
+    { label: "Gradient", cls: "sunset" },
+    { label: "Buy now", cls: "mint-pill" },
+    { label: "Toggle", cls: "pill-dot" },
+    {
+      cls: "split-buy",
+      html: '<span class="btn-split__label">Buy now</span><span class="btn-split__price">$49</span>',
+    },
+    {
+      cls: "split-sub",
+      html: '<span class="btn-split__label">Subscribe</span><span class="btn-split__price">$12/mo</span>',
+    },
+    {
+      cls: "split-cart",
+      html: '<span class="btn-split__label">Add to cart</span><span class="btn-split__price">$24.00</span>',
+    },
+    {
+      cls: "split-pro",
+      html: '<span class="btn-split__label">Upgrade</span><span class="btn-split__price">Pro</span>',
+    },
+    {
+      cls: "split-free",
+      html: '<span class="btn-split__label">Start free trial</span><span class="btn-split__price">14 days</span>',
+    },
+  ];
+
+  const gallery = document.getElementById("ripple-gallery");
+  for (const def of defs) {
+    allInstances.push(new RippleButton(gallery, def));
+  }
+
+  function tick() {
+    for (const inst of allInstances) {
+      inst.update(0.016);
+      inst.canvas.requestPaint();
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+</script>
